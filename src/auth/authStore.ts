@@ -9,7 +9,7 @@ type AuthState = {
 
   /**
    * Set session after successful login/register.
-   * Expects already validated AuthResponse from auth.ts.
+   * Expects normalized AuthResponse from auth.ts.
    */
   setSession: (auth: AuthResponse) => void;
 
@@ -19,16 +19,7 @@ type AuthState = {
   logout: () => void;
 };
 
-/**
- * Auth store using Zustand.
- *
- * Scope:
- * - Authentication/session state only
- * - No API calls
- * - No server state
- */
 export const useAuthStore = create<AuthState>((set) => {
-  // Lazy hydration from localStorage on store creation
   const stored = loadAuth();
 
   return {

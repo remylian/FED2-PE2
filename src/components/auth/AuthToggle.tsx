@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../auth/authStore";
+import { useAuthStore } from "../../auth/authStore";
 
 export default function AuthToggle() {
   const navigate = useNavigate();

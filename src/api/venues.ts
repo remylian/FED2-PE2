@@ -7,6 +7,9 @@ const ApiEnvelopeSchema = <T extends z.ZodTypeAny>(dataSchema: T, metaSchema?: z
     meta: (metaSchema ?? z.unknown()).optional(),
   });
 
+/**
+ * Media items are objects with url/alt
+ */
 const MediaItemSchema = z.object({
   url: z.string().url(),
   alt: z.string().nullable().optional(),
@@ -35,6 +38,25 @@ const LocationSchema = z
   .partial()
   .optional();
 
+/**
+ * Bookings (for availability calendar)
+ */
+const BookingSchema = z
+  .object({
+    id: z.string(),
+    dateFrom: z.string(),
+    dateTo: z.string(),
+    guests: z.number().optional(),
+    created: z.string().optional(),
+    updated: z.string().optional(),
+  })
+  .passthrough();
+
+export type Booking = z.infer<typeof BookingSchema>;
+
+/**
+ * Venue core schema (tolerant / passthrough)
+ */
 const VenueSchema = z
   .object({
     id: z.string(),
@@ -44,8 +66,13 @@ const VenueSchema = z
     price: z.number().optional().default(0),
     maxGuests: z.number().optional().default(0),
     rating: z.number().optional().default(0),
+    created: z.string().optional(),
+    updated: z.string().optional(),
     meta: MetaSchema,
     location: LocationSchema,
+
+    // included when using _bookings=true
+    bookings: z.array(BookingSchema).optional().default([]),
   })
   .passthrough();
 
@@ -69,10 +96,11 @@ export type PagedResult<T> = {
   meta: PaginationMeta;
 };
 
-function toQuery(params: Record<string, string | number | undefined>) {
+function toQuery(params: Record<string, string | number | boolean | undefined | null>) {
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== "") qs.set(k, String(v));
+    if (v === undefined || v === null || v === "") return;
+    qs.set(k, String(v));
   });
   const s = qs.toString();
   return s ? `?${s}` : "";
@@ -123,7 +151,15 @@ export async function searchVenues(
   };
 }
 
-export async function getVenueById(id: string): Promise<Venue> {
-  const raw = await apiRequest<unknown>(`/holidaze/venues/${id}`);
+export async function getVenueById(
+  id: string,
+  opts?: { bookings?: boolean; owner?: boolean },
+): Promise<Venue> {
+  const query = toQuery({
+    _bookings: opts?.bookings ?? false,
+    _owner: opts?.owner ?? false,
+  });
+
+  const raw = await apiRequest<unknown>(`/holidaze/venues/${id}${query}`);
   return ApiEnvelopeSchema(VenueSchema).parse(raw).data;
 }

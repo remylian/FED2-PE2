@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
-import { listVenues, searchVenues, type PaginationMeta, type Venue } from "../api/venues";
+import { listVenues, searchVenues, type PagedResult, type Venue } from "../api/venues";
 import VenueCard from "../components/venues/VenueCard";
 import VenuesToolbar, { type SortKey, type SortOrder } from "../components/venues/VenuesToolbar";
 import PaginationControls from "../components/venues/PaginationControls";
@@ -8,56 +9,42 @@ import PaginationControls from "../components/venues/PaginationControls";
 const DEFAULT_LIMIT = 12;
 
 export default function VenuesPage() {
-  const [venues, setVenues] = useState<Venue[]>([]);
   const [query, setQuery] = useState("");
-
   const [page, setPage] = useState(1);
   const [limit] = useState(DEFAULT_LIMIT);
 
   const [sort, setSort] = useState<SortKey>("created");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Reset to page 1 when search or sort changes (keeps UX sane)
-  useEffect(() => {
+  // ✅ Reset page in handlers (not in an effect)
+  function handleQueryChange(value: string) {
+    setQuery(value);
     setPage(1);
-  }, [query, sort, sortOrder]);
+  }
 
-  useEffect(() => {
-    let alive = true;
+  function handleSortChange(value: SortKey) {
+    setSort(value);
+    setPage(1);
+  }
 
-    async function run() {
-      setIsLoading(true);
-      setError(null);
+  function handleSortOrderChange(value: SortOrder) {
+    setSortOrder(value);
+    setPage(1);
+  }
 
-      try {
-        const trimmed = query.trim();
-        const params = { page, limit, sort, sortOrder } as const;
+  const trimmed = query.trim();
 
-        const result =
-          trimmed.length > 0 ? await searchVenues(trimmed, params) : await listVenues(params);
+  const venuesQuery = useQuery<PagedResult<Venue[]>, Error>({
+    queryKey: ["venues", { q: trimmed || null, page, limit, sort, sortOrder }],
+    queryFn: () => {
+      const params = { page, limit, sort, sortOrder } as const;
+      return trimmed.length > 0 ? searchVenues(trimmed, params) : listVenues(params);
+    },
+    placeholderData: keepPreviousData,
+  });
 
-        if (!alive) return;
-
-        setVenues(result.data);
-        setMeta(result.meta);
-      } catch (err) {
-        if (!alive) return;
-        setError(err instanceof Error ? err.message : "Failed to load venues");
-      } finally {
-        if (alive) setIsLoading(false);
-      }
-    }
-
-    run();
-
-    return () => {
-      alive = false;
-    };
-  }, [query, page, limit, sort, sortOrder]);
+  const venues = venuesQuery.data?.data ?? [];
+  const meta = venuesQuery.data?.meta ?? null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 space-y-6">
@@ -66,11 +53,11 @@ export default function VenuesPage() {
 
         <VenuesToolbar
           query={query}
-          onQueryChange={setQuery}
+          onQueryChange={handleQueryChange}
           sort={sort}
-          onSortChange={setSort}
+          onSortChange={handleSortChange}
           sortOrder={sortOrder}
-          onSortOrderChange={setSortOrder}
+          onSortOrderChange={handleSortOrderChange}
         />
 
         {meta && (
@@ -80,20 +67,23 @@ export default function VenuesPage() {
         )}
       </header>
 
-      {isLoading && <p className="text-sm opacity-80">Loading venues…</p>}
+      {venuesQuery.isLoading && <p className="text-sm opacity-80">Loading venues…</p>}
+      {venuesQuery.isFetching && !venuesQuery.isLoading && (
+        <p className="text-sm opacity-70">Updating…</p>
+      )}
 
-      {error && (
+      {venuesQuery.isError && (
         <div className="rounded-md border p-3 text-sm">
           <p className="font-medium">Couldn’t load venues</p>
-          <p className="mt-1 opacity-80">{error}</p>
+          <p className="mt-1 opacity-80">{venuesQuery.error.message}</p>
         </div>
       )}
 
-      {!isLoading && !error && venues.length === 0 && (
+      {!venuesQuery.isLoading && !venuesQuery.isError && venues.length === 0 && (
         <p className="text-sm opacity-80">No venues found.</p>
       )}
 
-      {!isLoading && !error && venues.length > 0 && (
+      {!venuesQuery.isError && venues.length > 0 && (
         <>
           <ul className="grid gap-3 sm:grid-cols-2">
             {venues.map((v) => (
@@ -103,7 +93,7 @@ export default function VenuesPage() {
 
           <PaginationControls
             meta={meta}
-            isLoading={isLoading}
+            isLoading={venuesQuery.isFetching}
             onPrev={(p) => setPage(p)}
             onNext={(p) => setPage(p)}
           />

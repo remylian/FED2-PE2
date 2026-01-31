@@ -40,3 +40,54 @@ export async function createBooking(
 
   return ApiEnvelopeSchema(BookingResponseSchema).parse(raw).data;
 }
+
+/**
+ * Minimal venue shape needed by the bookings UI.
+ * We keep it permissive (passthrough) to avoid brittle coupling.
+ */
+const VenueSummarySchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    media: z
+      .array(
+        z.object({
+          url: z.string(),
+          alt: z.string().nullable().optional(),
+        }),
+      )
+      .optional()
+      .default([]),
+  })
+  .passthrough();
+
+/**
+ * Booking returned from GET /holidaze/bookings?_venue=true
+ * (includes a `venue` object).
+ */
+const BookingWithVenueSchema = BookingResponseSchema.extend({
+  venue: VenueSummarySchema.optional(),
+});
+
+export type BookingWithVenue = z.infer<typeof BookingWithVenueSchema>;
+
+const BookingListWithVenueSchema = z.array(BookingWithVenueSchema);
+
+/**
+ * Fetch bookings for the currently logged-in user.
+ * `_venue=true` is used so we can show venue info and link back to venue details.
+ */
+export async function getMyBookings(
+  profileName: string,
+  accessToken: string,
+): Promise<BookingWithVenue[]> {
+  const raw = await apiRequest<unknown>(
+    `/holidaze/profiles/${encodeURIComponent(profileName)}/bookings?_venue=true`,
+    {
+      method: "GET",
+      accessToken,
+    },
+  );
+
+  return ApiEnvelopeSchema(BookingListWithVenueSchema).parse(raw).data;
+}

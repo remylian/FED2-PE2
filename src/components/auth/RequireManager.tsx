@@ -1,14 +1,10 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../../auth/authStore";
 
-type Props = {
-  children: React.ReactNode;
-};
+export default function RequireManager({ children }: { children: React.ReactNode }) {
+  const { user, accessToken } = useAuthStore();
 
-export default function RequireManager({ children }: Props) {
-  const { isAuthenticated, user } = useAuthStore();
-
-  if (!isAuthenticated || !user) {
+  if (!accessToken || !user) {
     return <Navigate to="/login" replace />;
   }
 

@@ -27,7 +27,7 @@ const MediaSchema = z
 
 /**
  * Shared profile fields returned by auth endpoints.
- * Note: Some fields may exist depending on endpoint, so keep it tolerant.
+ * Some fields may exist depending on endpoint, so keep it tolerant.
  */
 const ProfileSchema = z.object({
   name: z.string(),
@@ -88,7 +88,7 @@ export type LoginInput = z.infer<typeof LoginInputSchema>;
  * Register a new user.
  *
  * IMPORTANT:
- * Noroff v2 register does NOT return accessToken.
+ * register does NOT return accessToken.
  * It returns the created profile data only.
  */
 export async function registerUser(input: unknown) {

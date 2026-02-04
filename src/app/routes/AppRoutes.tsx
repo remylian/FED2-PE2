@@ -8,6 +8,8 @@ import RegisterPage from "../../pages/RegisterPage";
 import ProfilePage from "../../pages/ProfilePage";
 import MyBookingsPage from "../../pages/MyBookingsPage";
 import ManagerDashboardPage from "../../pages/ManagerDashboardPage";
+import CreateVenuePage from "../../pages/CreateVenuePage";
+import EditVenuePage from "../../pages/EditVenuePage";
 import NotFoundPage from "../../pages/NotFoundPage";
 
 import RequireAuth from "../../components/auth/RequireAuth";
@@ -47,6 +49,22 @@ export default function AppRoutes() {
         element={
           <RequireManager>
             <ManagerDashboardPage />
+          </RequireManager>
+        }
+      />
+      <Route
+        path="/manager/venues/new"
+        element={
+          <RequireManager>
+            <CreateVenuePage />
+          </RequireManager>
+        }
+      />
+      <Route
+        path="/manager/venues/:id/edit"
+        element={
+          <RequireManager>
+            <EditVenuePage />
           </RequireManager>
         }
       />

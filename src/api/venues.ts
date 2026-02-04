@@ -163,3 +163,92 @@ export async function getVenueById(
   const raw = await apiRequest<unknown>(`/holidaze/venues/${id}${query}`);
   return ApiEnvelopeSchema(VenueSchema).parse(raw).data;
 }
+
+/**
+ * Manager: list venues owned by a profile.
+ */
+export async function listVenuesByProfile(
+  profileName: string,
+  accessToken: string,
+): Promise<Venue[]> {
+  const safeName = encodeURIComponent(profileName);
+
+  const raw = await apiRequest<unknown>(`/holidaze/profiles/${safeName}/venues`, {
+    method: "GET",
+    accessToken,
+  });
+
+  return ApiEnvelopeSchema(VenueListSchema).parse(raw).data;
+}
+
+/**
+ * Inputs for creating/updating venues.
+ */
+export type VenueMediaInput = {
+  url: string;
+  alt?: string | null;
+};
+
+export type VenueMetaInput = {
+  wifi?: boolean;
+  parking?: boolean;
+  breakfast?: boolean;
+  pets?: boolean;
+};
+
+export type VenueLocationInput = {
+  address?: string | null;
+  city?: string | null;
+  zip?: string | null;
+  country?: string | null;
+  continent?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+};
+
+export type CreateVenueInput = {
+  name: string;
+  description?: string;
+  media?: VenueMediaInput[];
+  price: number;
+  maxGuests: number;
+  rating?: number;
+  meta?: VenueMetaInput;
+  location?: VenueLocationInput;
+};
+
+export async function createVenue(input: CreateVenueInput, accessToken: string): Promise<Venue> {
+  const raw = await apiRequest<unknown>("/holidaze/venues", {
+    method: "POST",
+    accessToken,
+    body: input,
+  });
+
+  return ApiEnvelopeSchema(VenueSchema).parse(raw).data;
+}
+
+export type UpdateVenueInput = Partial<CreateVenueInput>;
+
+export async function updateVenue(
+  id: string,
+  input: UpdateVenueInput,
+  accessToken: string,
+): Promise<Venue> {
+  const raw = await apiRequest<unknown>(`/holidaze/venues/${id}`, {
+    method: "PUT",
+    accessToken,
+    body: input,
+  });
+
+  return ApiEnvelopeSchema(VenueSchema).parse(raw).data;
+}
+
+/**
+ * Manager: delete a venue by id.
+ */
+export async function deleteVenue(id: string, accessToken: string): Promise<void> {
+  await apiRequest<unknown>(`/holidaze/venues/${id}`, {
+    method: "DELETE",
+    accessToken,
+  });
+}

@@ -49,7 +49,7 @@ export default function RegisterPage() {
     setServerError(null);
 
     try {
-      // Register does NOT return a token in the Noroff API.
+      // Register does NOT return a token in the API.
       // We register, then immediately log in to get accessToken + user session.
       const auth = await registerAndLogin(values);
 

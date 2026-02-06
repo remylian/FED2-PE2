@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import { useAuthStore } from "../auth/authStore";
 import { createVenue, type CreateVenueInput } from "../api/venues";
@@ -21,7 +22,11 @@ export default function CreateVenuePage() {
       if (profileName) {
         await queryClient.invalidateQueries({ queryKey: ["venues", "profile", profileName] });
       }
+      toast.success("Venue created");
       navigate("/manager", { replace: true });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to create venue");
     },
   });
 
@@ -31,13 +36,6 @@ export default function CreateVenuePage() {
         <h1 className="text-2xl font-semibold">Create venue</h1>
         <p className="opacity-80">Add a new venue for customers to book.</p>
       </header>
-
-      {mutation.isError && (
-        <div className="rounded-md border p-3 text-sm">
-          <p className="font-medium">Couldn’t create venue</p>
-          <p className="mt-1 opacity-80">{(mutation.error as Error).message}</p>
-        </div>
-      )}
 
       <VenueForm
         mode="create"

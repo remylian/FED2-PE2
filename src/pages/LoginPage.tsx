@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import toast from "react-hot-toast";
 
 import { loginUser } from "../api/auth";
 import { useAuthStore } from "../auth/authStore";
@@ -43,11 +44,15 @@ export default function LoginPage() {
       const auth = await loginUser(values);
       setSession(auth);
 
+      toast.success(`Welcome back, ${auth.user.name}`);
+
       navigate(auth.user.venueManager ? "/manager" : "/profile", {
         replace: true,
       });
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : "Login failed");
+      const message = err instanceof Error ? err.message : "Login failed";
+      setServerError(message);
+      toast.error(message);
     }
   }
 

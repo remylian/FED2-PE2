@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
 import { useAuthStore } from "../auth/authStore";
 import { deleteVenue, listVenuesByProfile, type Venue } from "../api/venues";
+import Skeleton from "../components/ui/Skeleton";
 
 export default function ManagerDashboardPage() {
   const navigate = useNavigate();
@@ -32,11 +35,16 @@ export default function ManagerDashboardPage() {
       if (profileName) {
         await queryClient.invalidateQueries({ queryKey: ["venues", "profile", profileName] });
       }
+      toast.success("Venue deleted");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to delete venue");
     },
   });
 
   function handleLogout() {
     logout();
+    toast.success("Logged out");
     navigate("/", { replace: true });
   }
 
@@ -44,7 +52,6 @@ export default function ManagerDashboardPage() {
     if (deleteMutation.isPending) return;
 
     const ok = window.confirm(`Delete venue "${venue.name}"?\n\nThis cannot be undone.`);
-
     if (!ok) return;
 
     deleteMutation.mutate(venue.id);
@@ -78,13 +85,6 @@ export default function ManagerDashboardPage() {
         </section>
       )}
 
-      {deleteMutation.isError && (
-        <div className="rounded-md border p-3 text-sm">
-          <p className="font-medium">Couldn’t delete venue</p>
-          <p className="mt-1 opacity-80">{(deleteMutation.error as Error).message}</p>
-        </div>
-      )}
-
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">My venues</h2>
@@ -94,7 +94,26 @@ export default function ManagerDashboardPage() {
           </Link>
         </div>
 
-        {venuesQuery.isLoading && <p className="text-sm opacity-80">Loading venues…</p>}
+        {venuesQuery.isLoading && (
+          <ul className="space-y-3" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className="rounded-md border p-4 space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-56" />
+                    <Skeleton className="h-4 w-44" />
+                  </div>
+                  <div className="flex gap-3">
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                </div>
+                <Skeleton className="h-40 w-full" />
+              </li>
+            ))}
+          </ul>
+        )}
 
         {venuesQuery.isError && (
           <div className="rounded-md border p-3 text-sm">

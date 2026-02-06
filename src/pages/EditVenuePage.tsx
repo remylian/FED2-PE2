@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import { useAuthStore } from "../auth/authStore";
 import { getVenueById, updateVenue, type Venue, type UpdateVenueInput } from "../api/venues";
@@ -34,7 +35,12 @@ export default function EditVenuePage() {
         await queryClient.invalidateQueries({ queryKey: ["venues", "profile", profileName] });
       }
       await queryClient.invalidateQueries({ queryKey: ["venue", updated.id] });
+
+      toast.success("Venue updated");
       navigate("/manager", { replace: true });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to update venue");
     },
   });
 
@@ -71,13 +77,6 @@ export default function EditVenuePage() {
         <h1 className="text-2xl font-semibold">Edit venue</h1>
         <p className="opacity-80">Update details for “{venue.name}”.</p>
       </header>
-
-      {mutation.isError && (
-        <div className="rounded-md border p-3 text-sm">
-          <p className="font-medium">Couldn’t update venue</p>
-          <p className="mt-1 opacity-80">{(mutation.error as Error).message}</p>
-        </div>
-      )}
 
       <VenueForm
         mode="edit"

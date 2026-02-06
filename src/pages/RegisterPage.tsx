@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import toast from "react-hot-toast";
 
 import { registerAndLogin } from "../api/auth";
 import { useAuthStore } from "../auth/authStore";
@@ -49,21 +50,21 @@ export default function RegisterPage() {
     setServerError(null);
 
     try {
-      // Register does NOT return a token in the API.
+      // Register does NOT return a token in the Noroff API.
       // We register, then immediately log in to get accessToken + user session.
       const auth = await registerAndLogin(values);
 
       // Store session globally (Zustand) + persist via authStore/authStorage
       setSession(auth);
 
+      toast.success("Account created");
+
       // Redirect based on role
       navigate(auth.user.venueManager ? "/manager" : "/profile", { replace: true });
     } catch (err) {
-      if (err instanceof Error) {
-        setServerError(err.message);
-      } else {
-        setServerError("Registration failed");
-      }
+      const message = err instanceof Error ? err.message : "Registration failed";
+      setServerError(message);
+      toast.error(message);
     }
   }
 

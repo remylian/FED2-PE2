@@ -14,12 +14,17 @@ type AuthState = {
   setSession: (auth: AuthResponse) => void;
 
   /**
+   * Update stored user fields (e.g. avatar) and persist.
+   */
+  updateUser: (patch: Partial<AuthUser>) => void;
+
+  /**
    * Clear session and persisted auth data.
    */
   logout: () => void;
 };
 
-export const useAuthStore = create<AuthState>((set) => {
+export const useAuthStore = create<AuthState>((set, get) => {
   const stored = loadAuth();
 
   return {
@@ -34,6 +39,19 @@ export const useAuthStore = create<AuthState>((set) => {
         user: auth.user,
         isAuthenticated: true,
       });
+    },
+
+    updateUser: (patch) => {
+      const { accessToken, user } = get();
+      if (!accessToken || !user) return;
+
+      const next: AuthResponse = {
+        accessToken,
+        user: { ...user, ...patch },
+      };
+
+      saveAuth(next);
+      set({ user: next.user });
     },
 
     logout: () => {

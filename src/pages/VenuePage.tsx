@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 import { getVenueById, type Venue } from "../api/venues";
 import { createBooking } from "../api/bookings";
@@ -9,6 +10,7 @@ import VenueAvailabilityCalendar from "../components/venues/VenueAvailabilityCal
 import BookingPanel from "../components/bookings/BookingPanel";
 import { useBookingSelection } from "../hooks/useBookingSelection";
 import { dayKeyToIsoUtc } from "../utils/bookingDates";
+import Skeleton from "../components/ui/Skeleton";
 
 export default function VenuePage() {
   const { id } = useParams();
@@ -37,11 +39,6 @@ export default function VenuePage() {
 
   const bookingMutation = useMutation({
     mutationFn: async () => {
-      /**
-       * Why we validate here:
-       * The UI is not the source of truth.
-       * Mutations must be correct even if UI state becomes inconsistent.
-       */
       if (!id) throw new Error("Missing venue id");
       if (!venue) throw new Error("Venue not loaded");
       if (!accessToken) throw new Error("You must be logged in to book.");
@@ -63,10 +60,13 @@ export default function VenuePage() {
       );
     },
     onSuccess: async () => {
-      // Keeping the calendar accurate matters more than keeping local optimistic state.
       await qc.invalidateQueries({ queryKey: ["venue", id, { bookings: true }] });
       selection.clearDates();
       setGuests(1);
+      toast.success("Booking confirmed");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Booking failed");
     },
   });
 
@@ -78,7 +78,30 @@ export default function VenuePage() {
         ← Back to venues
       </Link>
 
-      {venueQuery.isLoading && <p className="text-sm opacity-80">Loading venue…</p>}
+      {venueQuery.isLoading && (
+        <div className="space-y-4" aria-busy="true" aria-live="polite">
+          <header className="space-y-2">
+            <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+          </header>
+
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+
+          <div className="rounded-md border p-4 space-y-3">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+
+          <div className="rounded-md border p-4 space-y-3">
+            <Skeleton className="h-6 w-56" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      )}
 
       {venueQuery.isError && (
         <div className="rounded-md border p-3 text-sm">
@@ -115,8 +138,6 @@ export default function VenuePage() {
             activeField={selection.activeField}
             onActiveFieldChange={(next) => {
               selection.setActiveField(next);
-              // Keeps the UI hint relevant when users manually switch fields.
-              // (We clear hint via the hook’s internal click handler, but switching is separate.)
             }}
             guests={guests}
             onGuestsChange={setGuests}

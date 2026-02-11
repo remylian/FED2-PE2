@@ -28,12 +28,6 @@ type Props = {
   success: boolean;
 };
 
-/**
- * Booking panel UI.
- *
- * - Keeps the VenuePage focused on data + composition
- * - Makes it easy to reuse the booking UI later (e.g. in a modal)
- */
 export default function BookingPanel({
   venuePrice,
   maxGuests,
@@ -59,7 +53,10 @@ export default function BookingPanel({
   const nights = startKey && endKey ? nightsBetweenUtc(startKey, endKey) : 0;
   const total = canShowSummary ? venuePrice * nights : 0;
 
-  const canBook = Boolean(startKey && endKey && isAuthenticated);
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const checkInInPast = Boolean(startKey && startKey < todayKey);
+
+  const canBook = Boolean(startKey && endKey && isAuthenticated && !checkInInPast);
 
   return (
     <section className="rounded-md border p-4 space-y-3">
@@ -108,6 +105,13 @@ export default function BookingPanel({
         <div className="rounded-md border p-3 text-sm">
           <p className="font-medium">Note</p>
           <p className="mt-1 opacity-80">{hint}</p>
+        </div>
+      )}
+
+      {checkInInPast && (
+        <div className="rounded-md border p-3 text-sm">
+          <p className="font-medium">Invalid date</p>
+          <p className="mt-1 opacity-80">Check-in cannot be in the past.</p>
         </div>
       )}
 

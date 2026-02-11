@@ -7,20 +7,12 @@ type AuthState = {
   user: AuthUser | null;
   isAuthenticated: boolean;
 
-  /**
-   * Set session after successful login/register.
-   * Expects normalized AuthResponse from auth.ts.
-   */
+  // Keeps auth persistence out of React components.
   setSession: (auth: AuthResponse) => void;
 
-  /**
-   * Update stored user fields (e.g. avatar) and persist.
-   */
+  // Allows profile updates (e.g. avatar) without forcing a re-login.
   updateUser: (patch: Partial<AuthUser>) => void;
 
-  /**
-   * Clear session and persisted auth data.
-   */
   logout: () => void;
 };
 
@@ -34,21 +26,14 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     setSession: (auth) => {
       saveAuth(auth);
-      set({
-        accessToken: auth.accessToken,
-        user: auth.user,
-        isAuthenticated: true,
-      });
+      set({ accessToken: auth.accessToken, user: auth.user, isAuthenticated: true });
     },
 
     updateUser: (patch) => {
       const { accessToken, user } = get();
       if (!accessToken || !user) return;
 
-      const next: AuthResponse = {
-        accessToken,
-        user: { ...user, ...patch },
-      };
+      const next: AuthResponse = { accessToken, user: { ...user, ...patch } };
 
       saveAuth(next);
       set({ user: next.user });
@@ -56,11 +41,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     logout: () => {
       clearAuth();
-      set({
-        accessToken: null,
-        user: null,
-        isAuthenticated: false,
-      });
+      set({ accessToken: null, user: null, isAuthenticated: false });
     },
   };
 });

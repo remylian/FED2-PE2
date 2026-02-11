@@ -6,7 +6,7 @@ export type ActiveField = "start" | "end";
 type Props = {
   bookings: Booking[];
   startKey: string | null; // yyyy-mm-dd
-  endKey: string | null; // yyyy-mm-dd (checkout)
+  endKey: string | null; // yyyy-mm-dd
   activeField: ActiveField;
   onSelectDay: (dayKey: string) => void;
 };
@@ -49,10 +49,12 @@ export default function VenueAvailabilityCalendar({
   onSelectDay,
 }: Props) {
   const today = useMemo(() => new Date(), []);
+  const todayKey = useMemo(() => toDayKey(today), [today]);
+
   const [cursor, setCursor] = useState(() => startOfMonth(today));
 
   const bookedDayKeys = useMemo(() => {
-    // Treat bookings as [dateFrom, dateTo) (checkout day not booked)
+    // Treat bookings as [dateFrom, dateTo] (inclusive end date)
     const set = new Set<string>();
 
     for (const b of bookings) {
@@ -60,10 +62,10 @@ export default function VenueAvailabilityCalendar({
       const to = dateOnly(b.dateTo);
 
       if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) continue;
-      if (to <= from) continue;
+      if (to < from) continue;
 
       const cur = new Date(from);
-      while (cur < to) {
+      while (cur <= to) {
         set.add(toDayKey(cur));
         cur.setDate(cur.getDate() + 1);
       }
@@ -96,7 +98,7 @@ export default function VenueAvailabilityCalendar({
     const s = startKey;
     const e = endKey;
     if (!s || !e) return false;
-    return compareKeys(key, s) >= 0 && compareKeys(key, e) < 0;
+    return compareKeys(key, s) >= 0 && compareKeys(key, e) <= 0;
   }
 
   return (
@@ -125,7 +127,6 @@ export default function VenueAvailabilityCalendar({
         </div>
       </div>
 
-      {/* Mode hint */}
       <p className="text-sm opacity-80">
         Selecting:{" "}
         <span className="font-medium">{activeField === "start" ? "Check-in" : "Check-out"}</span>
@@ -150,6 +151,8 @@ export default function VenueAvailabilityCalendar({
             c.date.getMonth() === today.getMonth() &&
             c.date.getDate() === today.getDate();
 
+          const isPast = dayKey < todayKey;
+
           const selectedStart = startKey === dayKey;
           const selectedEnd = endKey === dayKey;
           const inRange = isInSelectedRange(dayKey);
@@ -157,13 +160,12 @@ export default function VenueAvailabilityCalendar({
           const base =
             "h-10 rounded-md border flex items-center justify-center text-sm select-none";
 
-          const bookedClass =
+          const disabledClass =
             "bg-slate-900/55 text-slate-300 line-through opacity-80 cursor-not-allowed";
 
           const availableClass =
             "bg-emerald-900/20 text-emerald-100 hover:bg-emerald-900/30 cursor-pointer";
 
-          // Very obvious selection (can tone down later)
           const rangeClass = inRange ? "bg-yellow-400/40" : "";
           const todayClass = isToday ? "ring-2 ring-amber-400" : "";
 
@@ -173,24 +175,26 @@ export default function VenueAvailabilityCalendar({
               ? "ring-4 ring-sky-500 font-bold bg-sky-900/40"
               : "";
 
+          const disabled = c.booked || isPast;
+
           return (
             <div
               key={dayKey}
               className={[
                 base,
-                c.booked ? bookedClass : availableClass,
+                disabled ? disabledClass : availableClass,
                 rangeClass,
                 todayClass,
                 selectedClass,
               ].join(" ")}
-              title={c.booked ? "Booked" : "Available"}
+              title={c.booked ? "Booked" : isPast ? "Past date" : "Available"}
               role="button"
-              tabIndex={0}
+              tabIndex={disabled ? -1 : 0}
               onClick={() => {
-                if (!c.booked) onSelectDay(dayKey);
+                if (!disabled) onSelectDay(dayKey);
               }}
               onKeyDown={(e) => {
-                if (c.booked) return;
+                if (disabled) return;
                 if (e.key === "Enter" || e.key === " ") onSelectDay(dayKey);
               }}
             >
@@ -208,7 +212,7 @@ export default function VenueAvailabilityCalendar({
 
         <div className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-sm border bg-slate-900/55" />
-          <span className="opacity-80">Booked</span>
+          <span className="opacity-80">Booked / past</span>
         </div>
 
         <div className="flex items-center gap-2">

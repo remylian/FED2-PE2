@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import { useAuthStore } from "../auth/authStore";
-import { getMyBookings, type BookingWithVenue } from "../api/bookings";
+import { cancelBooking, getMyBookings, type BookingWithVenue } from "../api/bookings";
 import { formatDDMMYYYYFromKey } from "../utils/bookingDates";
 
 function isoToDayKey(iso: string) {
@@ -14,6 +15,8 @@ export default function MyBookingsPage() {
   const { accessToken, user } = useAuthStore();
   const profileName = user?.name ?? null;
 
+  const queryClient = useQueryClient();
+
   const bookingsQuery = useQuery<BookingWithVenue[], Error>({
     queryKey: ["bookings", "profile", profileName, { venue: true }],
     queryFn: async () => {
@@ -23,6 +26,23 @@ export default function MyBookingsPage() {
     },
     enabled: Boolean(accessToken && profileName),
     staleTime: 30_000,
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async (bookingId: string) => {
+      if (!accessToken) throw new Error("Missing access token");
+      return cancelBooking(bookingId, accessToken);
+    },
+    onSuccess: () => {
+      toast.success("Booking cancelled");
+      queryClient.invalidateQueries({
+        queryKey: ["bookings", "profile", profileName, { venue: true }],
+      });
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : "Failed to cancel booking";
+      toast.error(message);
+    },
   });
 
   const todayKey = new Date().toISOString().slice(0, 10);
@@ -92,6 +112,20 @@ export default function MyBookingsPage() {
                           loading="lazy"
                         />
                       )}
+
+                      <div className="flex items-center justify-end gap-2 pt-2">
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          disabled={cancelMutation.isPending}
+                          onClick={() => {
+                            const ok = window.confirm("Cancel this booking?");
+                            if (ok) cancelMutation.mutate(b.id);
+                          }}
+                        >
+                          {cancelMutation.isPending ? "Cancelling…" : "Cancel booking"}
+                        </button>
+                      </div>
                     </li>
                   );
                 })}

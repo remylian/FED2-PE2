@@ -1,5 +1,9 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "https://v2.api.noroff.dev";
 
+/**
+ * Required for all platform requests.
+ * Failing fast here prevents hard-to-debug request errors later.
+ */
 export const NOROFF_API_KEY = import.meta.env.VITE_NOROFF_API_KEY ?? "";
 
 if (!NOROFF_API_KEY) {

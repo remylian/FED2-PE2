@@ -2,10 +2,8 @@ import { z } from "zod";
 import { apiRequest } from "./client";
 
 /**
- * Noroff v2 returns data wrapped in an envelope:
- * { data: ..., meta: ... }
- *
- * We validate the envelope to avoid assuming response shapes.
+ * Noroff v2 responses are wrapped in { data, meta }.
+ * Validating the envelope prevents silent shape mismatches.
  */
 const ApiEnvelopeSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
@@ -14,8 +12,7 @@ const ApiEnvelopeSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   });
 
 /**
- * Noroff media fields (avatar/banner) are objects, not strings.
- * They can also be null/undefined.
+ * Media fields are structured objects (not strings) and may be null.
  */
 const MediaSchema = z
   .object({
@@ -25,10 +22,6 @@ const MediaSchema = z
   .nullable()
   .optional();
 
-/**
- * Shared profile fields returned by auth endpoints.
- * Some fields may exist depending on endpoint, so keep it tolerant.
- */
 const ProfileSchema = z.object({
   name: z.string(),
   email: z.string().email(),
@@ -38,9 +31,6 @@ const ProfileSchema = z.object({
   bio: z.string().nullable().optional(),
 });
 
-/**
- * Login returns the same profile fields PLUS accessToken.
- */
 const LoginDataSchema = ProfileSchema.extend({
   accessToken: z.string(),
 });
@@ -48,10 +38,6 @@ const LoginDataSchema = ProfileSchema.extend({
 const RegisterResponseSchema = ApiEnvelopeSchema(ProfileSchema);
 const LoginResponseSchema = ApiEnvelopeSchema(LoginDataSchema);
 
-/**
- * Input schemas
- * Validate payloads before sending them to the API.
- */
 const RegisterInputSchema = z.object({
   name: z.string().min(1),
   email: z.string().email().endsWith("@stud.noroff.no"),
@@ -65,8 +51,8 @@ const LoginInputSchema = z.object({
 });
 
 /**
- * Internal types used across the app (what Zustand stores).
- * We normalize avatar into optional primitive fields to keep the UI simple.
+ * Internal normalized shape used by the app.
+ * We flatten media objects to keep UI logic simple.
  */
 export type AuthUser = {
   name: string;
@@ -84,13 +70,6 @@ export type AuthResponse = {
 export type RegisterInput = z.infer<typeof RegisterInputSchema>;
 export type LoginInput = z.infer<typeof LoginInputSchema>;
 
-/**
- * Register a new user.
- *
- * IMPORTANT:
- * register does NOT return accessToken.
- * It returns the created profile data only.
- */
 export async function registerUser(input: unknown) {
   const payload = RegisterInputSchema.parse(input);
 
@@ -99,15 +78,11 @@ export async function registerUser(input: unknown) {
     body: payload,
   });
 
-  // Returns the created profile (no token)
   return RegisterResponseSchema.parse(raw).data;
 }
 
 /**
- * Log in an existing user.
- *
- * Login returns accessToken + profile fields (inside data).
- * We normalize to { accessToken, user } for the rest of the app.
+ * Normalizes Noroff login response into the app's internal auth shape.
  */
 export async function loginUser(input: unknown): Promise<AuthResponse> {
   const payload = LoginInputSchema.parse(input);
@@ -133,18 +108,12 @@ export async function loginUser(input: unknown): Promise<AuthResponse> {
 }
 
 /**
- * Convenience helper for the UI:
- * - Create the account
- * - Immediately log in to obtain accessToken
- *
- * This keeps RegisterPage simple and avoids duplicating flow logic in the UI.
+ * Keeps the register flow simple by handling login immediately after creation.
  */
 export async function registerAndLogin(input: unknown): Promise<AuthResponse> {
   const payload = RegisterInputSchema.parse(input);
 
-  // 1) Create user profile (no token returned)
   await registerUser(payload);
 
-  // 2) Log in to receive accessToken + normalized user
   return loginUser({ email: payload.email, password: payload.password });
 }

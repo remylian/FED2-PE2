@@ -1,47 +1,27 @@
-/**
- * Booking date helpers.
- *
- * - Keeps date rules (keys, formatting, UTC conversion) consistent across the app
- * - Prevents pages/components from re-implementing subtle date logic differently
- */
-
-export function formatDDMMYYYYFromKey(key: string) {
-  const [y, m, d] = key.split("-");
-  return `${d}-${m}-${y}`;
+export function formatDDMMYYYYFromKey(key: string): string {
+  const [yyyy, mm, dd] = key.split("-");
+  return `${dd}-${mm}-${yyyy}`;
 }
 
-export function compareKeys(a: string, b: string) {
-  // yyyy-mm-dd compares lexicographically, which is safer than constructing Date() repeatedly.
-  if (a < b) return -1;
-  if (a > b) return 1;
-  return 0;
-}
-
-export function addDaysKey(key: string, delta: number) {
-  const [y, m, d] = key.split("-").map(Number);
-  const date = new Date(y, (m ?? 1) - 1, d ?? 1);
-  date.setDate(date.getDate() + delta);
-
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-export function dayKeyToIsoUtc(dayKey: string) {
-  /**
-   * Why UTC:
-   * The app operates on “date-only” selections.
-   * Converting via UTC avoids timezone offsets shifting the date when serialized.
-   */
+function toUtcMsFromKey(dayKey: string): number {
   const [y, m, d] = dayKey.split("-").map(Number);
-  const dt = new Date(Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1, 0, 0, 0));
-  return dt.toISOString();
+  return Date.UTC(y, m - 1, d);
 }
 
-export function nightsBetweenUtc(startKey: string, endKey: string) {
-  const start = new Date(dayKeyToIsoUtc(startKey)).getTime();
-  const end = new Date(dayKeyToIsoUtc(endKey)).getTime();
-  const diff = end - start;
-  return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
+/**
+ * Inclusive day count between start and end keys.
+ * Example: 2026-02-10 → 2026-02-12 = 3
+ */
+export function nightsBetweenUtc(startKey: string, endKey: string): number {
+  const start = toUtcMsFromKey(startKey);
+  const end = toUtcMsFromKey(endKey);
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 0;
+
+  const oneDay = 24 * 60 * 60 * 1000;
+  return Math.floor((end - start) / oneDay) + 1;
+}
+
+export function dayKeyToIsoUtc(dayKey: string): string {
+  const [y, m, d] = dayKey.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toISOString();
 }

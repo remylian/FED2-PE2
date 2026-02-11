@@ -46,6 +46,11 @@ export default function VenuePage() {
         throw new Error("Select check-in and check-out dates first.");
       }
 
+      const todayKey = new Date().toISOString().slice(0, 10);
+      if (selection.startKey < todayKey) {
+        throw new Error("Check-in cannot be in the past.");
+      }
+
       if (guests < 1) throw new Error("Guests must be at least 1.");
       if (guests > venue.maxGuests) throw new Error(`Max guests is ${venue.maxGuests}.`);
 

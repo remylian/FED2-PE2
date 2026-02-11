@@ -91,3 +91,10 @@ export async function getMyBookings(
 
   return ApiEnvelopeSchema(BookingListWithVenueSchema).parse(raw).data;
 }
+
+export async function cancelBooking(bookingId: string, accessToken: string): Promise<void> {
+  await apiRequest<void>(`/holidaze/bookings/${bookingId}`, {
+    method: "DELETE",
+    accessToken,
+  });
+}

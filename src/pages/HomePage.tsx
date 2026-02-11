@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
+import { useAuthStore } from "../auth/authStore";
 
 export default function HomePage() {
+  const { isAuthenticated } = useAuthStore();
+
   return (
     <main className="mx-auto max-w-10xl px-6 py-10 space-y-10">
       {/* HERO CONTAINER */}
@@ -30,55 +33,69 @@ export default function HomePage() {
       </div>
 
       {/* FEATURE STRIP CONTAINER */}
-      <div className="rounded-3xl  py-10 ">
-        <div className="grid gap-10 sm:grid-cols-3">
+      <div className="rounded-3xl py-10">
+        <div
+          className={[
+            "grid gap-10",
+            isAuthenticated ? "place-items-center" : "sm:grid-cols-3",
+          ].join(" ")}
+        >
           {/* Browse */}
-          <div className="rounded-2xl  feature-card shadow-md">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-white text-sm">
-              🌴
-            </div>
+          <div className={isAuthenticated ? "w-full max-w-sm" : ""}>
+            <div className="rounded-2xl feature-card shadow-md">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-white text-sm">
+                🌴
+              </div>
 
-            <h2 className="text-base font-semibold">Explore unique places to stay</h2>
+              <h2 className="text-base font-semibold">Explore unique places to stay</h2>
 
-            <div className="mt-5">
-              <Link to="/venues" className="btn-primary">
-                Browse venues
-              </Link>
-            </div>
-          </div>
-
-          {/* Login */}
-          <div className="rounded-2xl feature-card shadow-md p-6 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-white text-sm">
-              🔐
-            </div>
-
-            <h2 className="text-base font-semibold">Manage your profile and bookings.</h2>
-
-            <div className="mt-5">
-              <Link
-                to="/login"
-                className="inline-flex rounded-full btn-primary text-sm font-semibold"
-              >
-                Login
-              </Link>
+              <div className="mt-5">
+                <Link to="/venues" className="btn-primary">
+                  Browse venues
+                </Link>
+              </div>
             </div>
           </div>
 
-          {/* Register */}
-          <div className="rounded-2xl feature-card shadow-md p-6 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-white text-sm">
-              ✨
-            </div>
+          {!isAuthenticated && (
+            <>
+              {/* Login */}
+              <div className="rounded-2xl feature-card shadow-md p-6 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-white text-sm">
+                  🔐
+                </div>
 
-            <h2 className="text-base font-semibold">Create an account to start booking</h2>
+                <h2 className="text-base font-semibold">Manage your profile and bookings.</h2>
 
-            <div className="mt-5">
-              <Link to="/register" className="inline-flex rounded-full  btn-primary font-semibold">
-                Create account
-              </Link>
-            </div>
-          </div>
+                <div className="mt-5">
+                  <Link
+                    to="/login"
+                    className="inline-flex rounded-full btn-primary text-sm font-semibold"
+                  >
+                    Login
+                  </Link>
+                </div>
+              </div>
+
+              {/* Register */}
+              <div className="rounded-2xl feature-card shadow-md p-6 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-white text-sm">
+                  ✨
+                </div>
+
+                <h2 className="text-base font-semibold">Create an account to start booking</h2>
+
+                <div className="mt-5">
+                  <Link
+                    to="/register"
+                    className="inline-flex rounded-full btn-primary font-semibold"
+                  >
+                    Create account
+                  </Link>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </main>

@@ -14,7 +14,7 @@ export default function VenueCard({ venue }: Props) {
         <img
           src={cover.url}
           alt={cover.alt ?? `${venue.name} image`}
-          className="mb-3 h-40 w-full rounded-md border object-cover"
+          className="mb-3 h-60 w-full rounded-md border object-cover"
           loading="lazy"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).style.display = "none";

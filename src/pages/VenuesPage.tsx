@@ -51,7 +51,7 @@ export default function VenuesPage() {
   const isRefreshing = venuesQuery.isFetching && !isInitialLoading;
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 space-y-6">
+    <main className="mx-auto max-w-7xl px-4 py-10 space-y-6">
       <header className="space-y-3">
         <h1 className="text-2xl font-bold">Venues</h1>
 
@@ -67,7 +67,8 @@ export default function VenuesPage() {
         <div className="flex items-center justify-between gap-3">
           {meta ? (
             <p className="text-sm opacity-80">
-              Page {meta.currentPage} of {meta.pageCount} • {meta.totalCount} venues
+              Page {meta.currentPage} of {meta.pageCount}
+              <br /> {meta.totalCount} venues
             </p>
           ) : (
             <span />
@@ -100,7 +101,7 @@ export default function VenuesPage() {
 
       {!venuesQuery.isError && !isInitialLoading && venues.length > 0 && (
         <>
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="grid gap-5 sm:grid-cols-3">
             {venues.map((v) => (
               <VenueCard key={v.id} venue={v} />
             ))}

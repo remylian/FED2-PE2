@@ -1,11 +1,15 @@
 import AppRoutes from "./app/routes/AppRoutes";
 import Header from "./layouts/Header";
+import Footer from "./layouts/Footer";
 
 export default function App() {
   return (
-    <div className="min-h-dvh bg-white text-slate-900">
+    <div className="min-h-dvh flex flex-col text-slate-900">
       <Header />
-      <AppRoutes />
+      <div className="flex-1">
+        <AppRoutes />
+      </div>
+      <Footer />
     </div>
   );
 }

@@ -123,7 +123,7 @@ export default function VenuePage() {
             <img
               src={venue.media[0].url}
               alt={venue.media[0].alt ?? `${venue.name} image`}
-              className="h-64 w-full rounded-md border object-cover"
+              className="h-160 w-full rounded-md border object-cover"
               loading="lazy"
             />
           )}

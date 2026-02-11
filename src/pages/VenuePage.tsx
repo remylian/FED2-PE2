@@ -17,7 +17,10 @@ export default function VenuePage() {
   const location = useLocation();
   const qc = useQueryClient();
 
-  const { isAuthenticated, accessToken } = useAuthStore();
+  const { isAuthenticated, accessToken, user, activeRole } = useAuthStore();
+
+  const isManagerAccount = Boolean(user?.venueManager);
+  const canBookAsCustomer = !isManagerAccount || activeRole === "customer";
 
   const [guests, setGuests] = useState<number>(1);
 
@@ -39,6 +42,7 @@ export default function VenuePage() {
 
   const bookingMutation = useMutation({
     mutationFn: async () => {
+      if (!canBookAsCustomer) throw new Error("Switch to customer mode to book venues.");
       if (!id) throw new Error("Missing venue id");
       if (!venue) throw new Error("Venue not loaded");
       if (!accessToken) throw new Error("You must be logged in to book.");
@@ -135,32 +139,41 @@ export default function VenuePage() {
 
           {venue.description && <p className="opacity-90">{venue.description}</p>}
 
-          <BookingPanel
-            venuePrice={venue.price}
-            maxGuests={venue.maxGuests}
-            startKey={selection.startKey}
-            endKey={selection.endKey}
-            activeField={selection.activeField}
-            onActiveFieldChange={(next) => {
-              selection.setActiveField(next);
-            }}
-            guests={guests}
-            onGuestsChange={setGuests}
-            hint={selection.hint}
-            onClear={selection.clearDates}
-            isAuthenticated={isAuthenticated}
-            loginHref={loginHref}
-            isSubmitting={bookingMutation.isPending}
-            onConfirm={() => bookingMutation.mutate()}
-            errorMessage={
-              bookingMutation.isError
-                ? bookingMutation.error instanceof Error
-                  ? bookingMutation.error.message
-                  : "Something went wrong"
-                : null
-            }
-            success={bookingMutation.isSuccess}
-          />
+          {canBookAsCustomer ? (
+            <BookingPanel
+              venuePrice={venue.price}
+              maxGuests={venue.maxGuests}
+              startKey={selection.startKey}
+              endKey={selection.endKey}
+              activeField={selection.activeField}
+              onActiveFieldChange={(next) => {
+                selection.setActiveField(next);
+              }}
+              guests={guests}
+              onGuestsChange={setGuests}
+              hint={selection.hint}
+              onClear={selection.clearDates}
+              isAuthenticated={isAuthenticated}
+              loginHref={loginHref}
+              isSubmitting={bookingMutation.isPending}
+              onConfirm={() => bookingMutation.mutate()}
+              errorMessage={
+                bookingMutation.isError
+                  ? bookingMutation.error instanceof Error
+                    ? bookingMutation.error.message
+                    : "Something went wrong"
+                  : null
+              }
+              success={bookingMutation.isSuccess}
+            />
+          ) : (
+            <div className="rounded-md border p-4 text-sm">
+              <p className="font-medium">Booking disabled</p>
+              <p className="mt-1 opacity-80">
+                You’re in manager mode. Switch to customer mode from your profile to book venues.
+              </p>
+            </div>
+          )}
 
           <VenueAvailabilityCalendar
             bookings={venue.bookings ?? []}

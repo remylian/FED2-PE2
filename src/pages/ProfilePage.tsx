@@ -17,7 +17,9 @@ function isValidUrl(value: string) {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, accessToken, logout, updateUser } = useAuthStore();
+  const { user, accessToken, logout, updateUser, activeRole, setActiveRole } = useAuthStore();
+
+  const isManagerAccount = Boolean(user?.venueManager);
 
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
   const [avatarAlt, setAvatarAlt] = useState(user?.avatarAlt ?? "");
@@ -45,7 +47,6 @@ export default function ProfilePage() {
       const nextUrl = profile.avatar?.url;
       const nextAlt = profile.avatar?.alt ?? null;
 
-      // Update local session user (what the UI uses)
       updateUser({
         ...(nextUrl ? { avatarUrl: nextUrl, avatarAlt: nextAlt } : {}),
       });
@@ -101,7 +102,7 @@ export default function ProfilePage() {
           My bookings
         </Link>
 
-        {user?.venueManager && (
+        {isManagerAccount && activeRole === "manager" && (
           <Link className="underline" to="/manager">
             Manager dashboard
           </Link>
@@ -121,8 +122,52 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <p className="text-sm opacity-70">Role</p>
+            <p className="text-sm opacity-70">Account</p>
             <p className="font-medium">{user.venueManager ? "Venue manager" : "Customer"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm opacity-70">Mode</p>
+            <p className="font-medium">
+              {isManagerAccount
+                ? activeRole === "manager"
+                  ? "Manager mode"
+                  : "Customer mode"
+                : "Customer mode"}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {isManagerAccount && (
+        <section className="rounded-md border p-4 space-y-3">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Mode</h2>
+            <p className="text-sm opacity-80">
+              Switch between managing venues and booking as a customer.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="rounded-md border px-3 py-2 text-sm"
+              onClick={() => {
+                const next = activeRole === "manager" ? "customer" : "manager";
+                setActiveRole(next);
+                toast.success(
+                  next === "manager" ? "Switched to manager mode" : "Switched to customer mode",
+                );
+              }}
+            >
+              {activeRole === "manager" ? "Switch to customer mode" : "Switch to manager mode"}
+            </button>
+
+            <p className="text-sm opacity-80">
+              {activeRole === "manager"
+                ? "Booking is disabled in manager mode."
+                : "Manager tools are disabled in customer mode."}
+            </p>
           </div>
         </section>
       )}

@@ -31,6 +31,7 @@ function fieldClass(hasError: boolean) {
     "shadow-sm",
     "focus:outline-none",
     "focus:ring-2",
+    "placeholder:text-sm",
     hasError ? "border-red-500 focus:ring-red-500" : "border-slate-300 focus:ring-emerald-500",
   ].join(" ");
 }
@@ -99,6 +100,7 @@ export default function RegisterPage() {
                 autoComplete="name"
                 {...register("name")}
               />
+
               {errors.name && <p className="text-sm text-red-600">{errors.name.message}</p>}
             </div>
 

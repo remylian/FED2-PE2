@@ -59,15 +59,15 @@ export default function BookingPanel({
   const canBook = Boolean(startKey && endKey && isAuthenticated && !checkInInPast);
 
   return (
-    <section className="rounded-md border p-4 space-y-3">
+    <section className="rounded-md border p-4 space-y-3 feature-card">
       <h2 className="font-semibold">Booking</h2>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <button
           type="button"
           className={[
-            "rounded-md border px-3 py-2 text-left",
-            activeField === "start" ? "ring-2 ring-emerald-500" : "",
+            "rounded-md border bg-gray-100 px-3 py-2 text-left",
+            activeField === "start" ? "ring-2 ring-sky-500" : "",
           ].join(" ")}
           onClick={() => onActiveFieldChange("start")}
         >
@@ -78,7 +78,7 @@ export default function BookingPanel({
         <button
           type="button"
           className={[
-            "rounded-md border px-3 py-2 text-left",
+            "rounded-md border bg-gray-100 px-3 py-2 text-left",
             activeField === "end" ? "ring-2 ring-sky-500" : "",
           ].join(" ")}
           onClick={() => onActiveFieldChange("end")}
@@ -96,7 +96,11 @@ export default function BookingPanel({
           </span>
         </p>
 
-        <button type="button" className="rounded-md border px-3 py-2 text-sm" onClick={onClear}>
+        <button
+          type="button"
+          className="rounded-md border bg-gray-100 px-3 py-2 text-sm"
+          onClick={onClear}
+        >
           Clear
         </button>
       </div>
@@ -127,7 +131,7 @@ export default function BookingPanel({
             max={maxGuests}
             value={guests}
             onChange={(e) => onGuestsChange(Number(e.target.value))}
-            className="w-32 rounded-md border px-3 py-2 text-sm"
+            className="w-32 rounded-md bg-gray-100 border px-3 py-2 text-sm"
           />
         </div>
 
@@ -141,7 +145,7 @@ export default function BookingPanel({
         ) : (
           <button
             type="button"
-            className="rounded-md border px-4 py-2 text-sm disabled:opacity-60"
+            className="rounded-md border px-4 py-2 text-sm btn-primary disabled:opacity-50"
             disabled={!canBook || isSubmitting}
             onClick={onConfirm}
           >
@@ -171,7 +175,7 @@ export default function BookingPanel({
       )}
 
       {success && (
-        <div className="rounded-md border p-3 text-sm">
+        <div className="rounded-md border bg-emerald-100 p-3 text-sm">
           <p className="font-medium">Booking created!</p>
           <p className="mt-1 opacity-80">The calendar will update automatically.</p>
         </div>

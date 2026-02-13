@@ -8,13 +8,6 @@ type UseBookingSelectionArgs = {
   bookings: Booking[];
 };
 
-/**
- * Hybrid booking selection state machine.
- *
- * - The “click calendar + two fields” behaviour is business logic
- * - Pages should compose behaviour, not implement it
- * - Keeps selection rules testable and easy to evolve without touching UI
- */
 export function useBookingSelection({ bookings }: UseBookingSelectionArgs) {
   const [startKey, setStartKey] = useState<string | null>(null);
   const [endKey, setEndKey] = useState<string | null>(null);
@@ -22,13 +15,7 @@ export function useBookingSelection({ bookings }: UseBookingSelectionArgs) {
   const [hint, setHint] = useState<string | null>(null);
 
   const bookedDayKeys = useMemo(() => {
-    /**
-     * Why we materialize a set:
-     * Range validation becomes O(n) in number of selected days,
-     * rather than searching bookings repeatedly.
-     *
-     * Rule: bookings are treated as [dateFrom, dateTo) (checkout day not booked)
-     */
+    // Inclusive booking rule: booked days are [dateFrom, dateTo]
     const set = new Set<string>();
 
     for (const b of bookings) {
@@ -36,7 +23,7 @@ export function useBookingSelection({ bookings }: UseBookingSelectionArgs) {
       const to = new Date(b.dateTo);
 
       if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) continue;
-      if (to <= from) continue;
+      if (to < from) continue;
 
       const fromKey = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, "0")}-${String(
         from.getDate(),
@@ -47,7 +34,7 @@ export function useBookingSelection({ bookings }: UseBookingSelectionArgs) {
       ).padStart(2, "0")}`;
 
       let cur = fromKey;
-      while (compareKeys(cur, toKey) < 0) {
+      while (compareKeys(cur, toKey) <= 0) {
         set.add(cur);
         cur = addDaysKey(cur, 1);
       }
@@ -56,12 +43,12 @@ export function useBookingSelection({ bookings }: UseBookingSelectionArgs) {
     return set;
   }, [bookings]);
 
-  function rangeIsValid(s: string, e: string) {
-    // Validates [s, e) against booked days.
-    if (compareKeys(e, s) <= 0) return false;
+  function rangeIsValidInclusive(s: string, e: string) {
+    // Validates [s, e] against booked days.
+    if (compareKeys(e, s) < 0) return false;
 
     let cur = s;
-    while (compareKeys(cur, e) < 0) {
+    while (compareKeys(cur, e) <= 0) {
       if (bookedDayKeys.has(cur)) return false;
       cur = addDaysKey(cur, 1);
     }
@@ -78,15 +65,14 @@ export function useBookingSelection({ bookings }: UseBookingSelectionArgs) {
   function handleSelectDay(dayKey: string) {
     setHint(null);
 
-    // Defensive guard: booked days should not be selectable.
+    // Booked days are not selectable
     if (bookedDayKeys.has(dayKey)) return;
 
-    // Selecting check-in
     if (activeField === "start") {
       setStartKey(dayKey);
 
-      // If an existing checkout is now invalid, drop it to prevent “hidden invalid state”.
-      if (endKey && compareKeys(endKey, dayKey) <= 0) {
+      if (endKey && compareKeys(endKey, dayKey) < 0) {
+        // if checkout is before check-in, clear it
         setEndKey(null);
       }
 
@@ -94,23 +80,20 @@ export function useBookingSelection({ bookings }: UseBookingSelectionArgs) {
       return;
     }
 
-    // Selecting check-out
     const s = startKey;
 
-    // If users jump straight to checkout, we still accept the click
-    // but guide them into a valid flow.
     if (!s) {
       setStartKey(dayKey);
       setHint("Now select a check-out date.");
       return;
     }
 
-    if (compareKeys(dayKey, s) <= 0) {
-      setHint("Check-out must be after check-in.");
+    if (compareKeys(dayKey, s) < 0) {
+      setHint("Check-out must be the same day or after check-in.");
       return;
     }
 
-    if (!rangeIsValid(s, dayKey)) {
+    if (!rangeIsValidInclusive(s, dayKey)) {
       setHint("That date range includes booked dates. Please choose different dates.");
       return;
     }

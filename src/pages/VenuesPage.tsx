@@ -17,7 +17,6 @@ export default function VenuesPage() {
   const [sort, setSort] = useState<SortKey>("created");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
-  // Reset page in handlers (not in an effect)
   function handleQueryChange(value: string) {
     setQuery(value);
     setPage(1);
@@ -36,9 +35,9 @@ export default function VenuesPage() {
   const trimmed = query.trim();
 
   const venuesQuery = useQuery<PagedResult<Venue[]>, Error>({
-    queryKey: ["venues", { q: trimmed || null, page, limit, sort, sortOrder }],
+    queryKey: ["venues", { q: trimmed || null, page, limit, sort, sortOrder, owner: true }],
     queryFn: () => {
-      const params = { page, limit, sort, sortOrder } as const;
+      const params = { page, limit, sort, sortOrder, owner: true } as const;
       return trimmed.length > 0 ? searchVenues(trimmed, params) : listVenues(params);
     },
     placeholderData: keepPreviousData,
@@ -101,7 +100,7 @@ export default function VenuesPage() {
 
       {!venuesQuery.isError && !isInitialLoading && venues.length > 0 && (
         <>
-          <ul className="grid gap-5 sm:grid-cols-3">
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {venues.map((v) => (
               <VenueCard key={v.id} venue={v} />
             ))}

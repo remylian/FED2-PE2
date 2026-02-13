@@ -91,14 +91,14 @@ export default function VenueForm(props: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <section className="rounded-md border p-4 space-y-4">
+      <section className="rounded-md border gradient-orange p-4 space-y-4">
         <div className="space-y-1">
           <label className="text-sm font-medium" htmlFor="name">
             Name
           </label>
           <input
             id="name"
-            className="w-full rounded-md border px-3 py-2 text-sm"
+            className="w-full rounded-md border bg-gray-100 px-3 py-2 text-sm"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Cozy cabin in the woods"
@@ -112,7 +112,7 @@ export default function VenueForm(props: Props) {
           </label>
           <textarea
             id="description"
-            className="w-full rounded-md border px-3 py-2 text-sm"
+            className="w-full rounded-md border bg-gray-100 px-3 py-2 text-sm"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Tell customers what makes this place special…"
@@ -128,7 +128,7 @@ export default function VenueForm(props: Props) {
             <input
               id="price"
               type="number"
-              className="w-full rounded-md border px-3 py-2 text-sm"
+              className="w-full rounded-md border bg-gray-100 px-3 py-2 text-sm"
               value={price}
               onChange={(e) => setPrice(Number(e.target.value))}
               min={1}
@@ -142,7 +142,7 @@ export default function VenueForm(props: Props) {
             <input
               id="maxGuests"
               type="number"
-              className="w-full rounded-md border px-3 py-2 text-sm"
+              className="w-full rounded-md border bg-gray-100 px-3 py-2 text-sm"
               value={maxGuests}
               onChange={(e) => setMaxGuests(Number(e.target.value))}
               min={1}
@@ -151,7 +151,7 @@ export default function VenueForm(props: Props) {
         </div>
       </section>
 
-      <section className="rounded-md border p-4 space-y-4">
+      <section className="rounded-md border gradient-orange p-4 space-y-4">
         <h2 className="text-lg font-semibold">Media</h2>
 
         <div className="space-y-1">
@@ -160,7 +160,7 @@ export default function VenueForm(props: Props) {
           </label>
           <input
             id="mediaUrl"
-            className="w-full rounded-md border px-3 py-2 text-sm"
+            className="w-full rounded-md border bg-gray-100 px-3 py-2 text-sm"
             value={mediaUrl}
             onChange={(e) => setMediaUrl(e.target.value)}
             placeholder="https://…"
@@ -174,7 +174,7 @@ export default function VenueForm(props: Props) {
           </label>
           <input
             id="mediaAlt"
-            className="w-full rounded-md border px-3 py-2 text-sm"
+            className="w-full rounded-md border bg-gray-100 px-3 py-2 text-sm"
             value={mediaAlt ?? ""}
             onChange={(e) => setMediaAlt(e.target.value)}
             placeholder="Front view of the cabin"
@@ -183,7 +183,7 @@ export default function VenueForm(props: Props) {
         </div>
       </section>
 
-      <section className="rounded-md border p-4 space-y-3">
+      <section className="rounded-md border gradient-orange p-4 space-y-3">
         <h2 className="text-lg font-semibold">Amenities</h2>
 
         <div className="grid grid-cols-2 gap-2 text-sm">
@@ -220,7 +220,7 @@ export default function VenueForm(props: Props) {
       <div className="flex items-center justify-end gap-3">
         <button
           type="button"
-          className="rounded-md border px-3 py-2 text-sm"
+          className="rounded-md border btn-secondary px-3 py-2 text-sm"
           onClick={props.onCancel}
           disabled={props.isSubmitting}
         >
@@ -229,7 +229,7 @@ export default function VenueForm(props: Props) {
 
         <button
           type="submit"
-          className="rounded-md border px-3 py-2 text-sm"
+          className="rounded-md  btn-primary px-3  py-2 text-sm"
           disabled={!canSubmit || props.isSubmitting}
           title={!canSubmit ? "Fill required fields first" : undefined}
         >

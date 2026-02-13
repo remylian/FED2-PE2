@@ -7,9 +7,6 @@ const ApiEnvelopeSchema = <T extends z.ZodTypeAny>(dataSchema: T, metaSchema?: z
     meta: (metaSchema ?? z.unknown()).optional(),
   });
 
-/**
- * Media items are objects with url/alt
- */
 const MediaItemSchema = z.object({
   url: z.string().url(),
   alt: z.string().nullable().optional(),
@@ -38,9 +35,6 @@ const LocationSchema = z
   .partial()
   .optional();
 
-/**
- * Bookings (for availability calendar)
- */
 const BookingSchema = z
   .object({
     id: z.string(),
@@ -54,9 +48,28 @@ const BookingSchema = z
 
 export type Booking = z.infer<typeof BookingSchema>;
 
-/**
- * Venue core schema (tolerant / passthrough)
- */
+const OwnerSchema = z
+  .object({
+    name: z.string(),
+    email: z.string().email().optional(),
+    bio: z.string().nullable().optional(),
+    avatar: z
+      .object({
+        url: z.string().url(),
+        alt: z.string().nullable().optional(),
+      })
+      .nullable()
+      .optional(),
+    banner: z
+      .object({
+        url: z.string().url(),
+        alt: z.string().nullable().optional(),
+      })
+      .nullable()
+      .optional(),
+  })
+  .passthrough();
+
 const VenueSchema = z
   .object({
     id: z.string(),
@@ -71,8 +84,8 @@ const VenueSchema = z
     meta: MetaSchema,
     location: LocationSchema,
 
-    // included when using _bookings=true
-    bookings: z.array(BookingSchema).optional().default([]),
+    owner: OwnerSchema.optional(), // present when _owner=true
+    bookings: z.array(BookingSchema).optional().default([]), // present when _bookings=true
   })
   .passthrough();
 
@@ -111,6 +124,7 @@ type ListParams = {
   limit?: number;
   sort?: string;
   sortOrder?: "asc" | "desc";
+  owner?: boolean;
 };
 
 export async function listVenues(params: ListParams = {}): Promise<PagedResult<Venue[]>> {
@@ -119,6 +133,7 @@ export async function listVenues(params: ListParams = {}): Promise<PagedResult<V
     limit: params.limit,
     sort: params.sort,
     sortOrder: params.sortOrder,
+    _owner: params.owner ?? false,
   });
 
   const raw = await apiRequest<unknown>(`/holidaze/venues${query}`);
@@ -140,6 +155,7 @@ export async function searchVenues(
     limit: params.limit,
     sort: params.sort,
     sortOrder: params.sortOrder,
+    _owner: params.owner ?? false,
   });
 
   const raw = await apiRequest<unknown>(`/holidaze/venues/search${query}`);
@@ -164,9 +180,6 @@ export async function getVenueById(
   return ApiEnvelopeSchema(VenueSchema).parse(raw).data;
 }
 
-/**
- * Manager: list venues owned by a profile.
- */
 export async function listVenuesByProfile(
   profileName: string,
   accessToken: string,
@@ -181,9 +194,6 @@ export async function listVenuesByProfile(
   return ApiEnvelopeSchema(VenueListSchema).parse(raw).data;
 }
 
-/**
- * Inputs for creating/updating venues.
- */
 export type VenueMediaInput = {
   url: string;
   alt?: string | null;
@@ -243,9 +253,6 @@ export async function updateVenue(
   return ApiEnvelopeSchema(VenueSchema).parse(raw).data;
 }
 
-/**
- * Manager: delete a venue by id.
- */
 export async function deleteVenue(id: string, accessToken: string): Promise<void> {
   await apiRequest<unknown>(`/holidaze/venues/${id}`, {
     method: "DELETE",

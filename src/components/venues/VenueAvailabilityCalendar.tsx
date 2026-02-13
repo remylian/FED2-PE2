@@ -6,7 +6,7 @@ export type ActiveField = "start" | "end";
 type Props = {
   bookings: Booking[];
   startKey: string | null; // yyyy-mm-dd
-  endKey: string | null; // yyyy-mm-dd
+  endKey: string | null; // yyyy-mm-dd (checkout)
   activeField: ActiveField;
   onSelectDay: (dayKey: string) => void;
 };
@@ -49,12 +49,9 @@ export default function VenueAvailabilityCalendar({
   onSelectDay,
 }: Props) {
   const today = useMemo(() => new Date(), []);
-  const todayKey = useMemo(() => toDayKey(today), [today]);
-
   const [cursor, setCursor] = useState(() => startOfMonth(today));
 
   const bookedDayKeys = useMemo(() => {
-    // Treat bookings as [dateFrom, dateTo] (inclusive end date)
     const set = new Set<string>();
 
     for (const b of bookings) {
@@ -94,7 +91,7 @@ export default function VenueAvailabilityCalendar({
 
   while (cells.length % 7 !== 0) cells.push({ date: null, key: null, booked: false });
 
-  function isInSelectedRange(key: string) {
+  function isInSelectedRangeInclusive(key: string) {
     const s = startKey;
     const e = endKey;
     if (!s || !e) return false;
@@ -102,14 +99,14 @@ export default function VenueAvailabilityCalendar({
   }
 
   return (
-    <section className="rounded-md border p-4 space-y-3">
+    <section className="rounded-md feature-card border p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-semibold">Availability</h2>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded-md border px-3 py-1 text-sm"
+            className="rounded-md border px-3 py-1 text-sm btn-primary"
             onClick={() => setCursor((d) => addMonths(d, -1))}
           >
             ←
@@ -119,7 +116,7 @@ export default function VenueAvailabilityCalendar({
 
           <button
             type="button"
-            className="rounded-md border px-3 py-1 text-sm"
+            className="rounded-md border px-3 py-1 text-sm btn-primary"
             onClick={() => setCursor((d) => addMonths(d, 1))}
           >
             →
@@ -151,50 +148,39 @@ export default function VenueAvailabilityCalendar({
             c.date.getMonth() === today.getMonth() &&
             c.date.getDate() === today.getDate();
 
-          const isPast = dayKey < todayKey;
-
           const selectedStart = startKey === dayKey;
           const selectedEnd = endKey === dayKey;
-          const inRange = isInSelectedRange(dayKey);
+          const inRange = isInSelectedRangeInclusive(dayKey);
 
           const base =
-            "h-10 rounded-md border flex items-center justify-center text-sm select-none";
+            "h-10 rounded-md border flex items-center justify-center text-sm select-none transition";
 
-          const disabledClass =
-            "bg-slate-900/55 text-slate-300 line-through opacity-80 cursor-not-allowed";
+          const todayClass = isToday ? "ring-2 ring-orange-300" : "";
 
-          const availableClass =
-            "bg-emerald-900/20 text-emerald-100 hover:bg-emerald-900/30 cursor-pointer";
+          let stateClass = "";
 
-          const rangeClass = inRange ? "bg-yellow-400/40" : "";
-          const todayClass = isToday ? "ring-2 ring-amber-400" : "";
-
-          const selectedClass = selectedStart
-            ? "ring-4 ring-emerald-500 font-bold bg-emerald-900/40"
-            : selectedEnd
-              ? "ring-4 ring-sky-500 font-bold bg-sky-900/40"
-              : "";
-
-          const disabled = c.booked || isPast;
+          if (c.booked) {
+            stateClass = "bg-red-200 text-red-600 line-through opacity-90 cursor-not-allowed";
+          } else if (selectedStart || selectedEnd) {
+            stateClass = "ring-2 ring-sky-500 font-semibold bg-sky-50 cursor-pointer";
+          } else if (inRange) {
+            stateClass = "bg-gray-300 text-black cursor-pointer";
+          } else {
+            stateClass = "bg-white hover:bg-orange-50 cursor-pointer";
+          }
 
           return (
             <div
               key={dayKey}
-              className={[
-                base,
-                disabled ? disabledClass : availableClass,
-                rangeClass,
-                todayClass,
-                selectedClass,
-              ].join(" ")}
-              title={c.booked ? "Booked" : isPast ? "Past date" : "Available"}
+              className={[base, stateClass, todayClass].join(" ")}
+              title={c.booked ? "Booked" : "Available"}
               role="button"
-              tabIndex={disabled ? -1 : 0}
+              tabIndex={0}
               onClick={() => {
-                if (!disabled) onSelectDay(dayKey);
+                if (!c.booked) onSelectDay(dayKey);
               }}
               onKeyDown={(e) => {
-                if (disabled) return;
+                if (c.booked) return;
                 if (e.key === "Enter" || e.key === " ") onSelectDay(dayKey);
               }}
             >
@@ -206,27 +192,22 @@ export default function VenueAvailabilityCalendar({
 
       <div className="flex flex-wrap gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <span className="inline-block h-3 w-3 rounded-sm border bg-emerald-900/20" />
+          <span className="inline-block h-3 w-3 rounded-sm border bg-white" />
           <span className="opacity-80">Available</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-block h-3 w-3 rounded-sm border bg-slate-900/55" />
-          <span className="opacity-80">Booked / past</span>
+          <span className="inline-block h-3 w-3 rounded-sm border bg-red-200" />
+          <span className="opacity-80">Booked</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-block h-3 w-3 rounded-sm border ring-4 ring-emerald-500" />
-          <span className="opacity-80">Check-in</span>
+          <span className="inline-block h-3 w-3 rounded-sm border ring-2 ring-sky-500 bg-sky-50" />
+          <span className="opacity-80">Check-in/check-out</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-block h-3 w-3 rounded-sm border ring-4 ring-sky-500" />
-          <span className="opacity-80">Check-out</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="inline-block h-3 w-3 rounded-sm border bg-yellow-400/40" />
+          <span className="inline-block h-3 w-3 rounded-sm border bg-gray-300" />
           <span className="opacity-80">Selected range</span>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -7,8 +8,7 @@ import { cancelBooking, getMyBookings, type BookingWithVenue } from "../api/book
 import { formatDDMMYYYYFromKey } from "../utils/bookingDates";
 
 function isoToDayKey(iso: string) {
-  // Noroff returns ISO strings; yyyy-mm-dd is the first 10 chars
-  return iso.slice(0, 10);
+  return iso.slice(0, 10); // yyyy-mm-dd
 }
 
 export default function MyBookingsPage() {
@@ -31,11 +31,11 @@ export default function MyBookingsPage() {
   const cancelMutation = useMutation({
     mutationFn: async (bookingId: string) => {
       if (!accessToken) throw new Error("Missing access token");
-      return cancelBooking(bookingId, accessToken);
+      await cancelBooking(bookingId, accessToken);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Booking cancelled");
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ["bookings", "profile", profileName, { venue: true }],
       });
     },
@@ -45,7 +45,7 @@ export default function MyBookingsPage() {
     },
   });
 
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const bookings = bookingsQuery.data ?? [];
 
   const upcoming = bookings
@@ -57,7 +57,7 @@ export default function MyBookingsPage() {
     .sort((a, b) => isoToDayKey(b.dateFrom).localeCompare(isoToDayKey(a.dateFrom)));
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10 space-y-6">
+    <main className="mx-auto w-full max-w-5xl px-4 py-10 space-y-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">My bookings</h1>
         <p className="opacity-80">Upcoming and past trips</p>
@@ -73,50 +73,78 @@ export default function MyBookingsPage() {
       )}
 
       {!bookingsQuery.isLoading && !bookingsQuery.isError && (
-        <div className="space-y-8">
+        <div className="space-y-10">
+          {/* UPCOMING */}
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">Upcoming</h2>
 
             {upcoming.length === 0 ? (
               <p className="text-sm opacity-80">No upcoming bookings yet.</p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="grid gap-6 sm:grid-cols-2">
                 {upcoming.map((b) => {
                   const fromKey = isoToDayKey(b.dateFrom);
                   const toKey = isoToDayKey(b.dateTo);
                   const venue = b.venue;
+                  const cover = venue?.media?.[0];
 
                   return (
-                    <li key={b.id} className="rounded-md border p-4 space-y-2">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-medium">{venue?.name ?? "Venue"}</p>
-                          <p className="text-sm opacity-80">
-                            {formatDDMMYYYYFromKey(fromKey)} → {formatDDMMYYYYFromKey(toKey)} •{" "}
-                            {b.guests} guest{b.guests === 1 ? "" : "s"}
-                          </p>
-                        </div>
-
-                        {venue?.id && (
-                          <Link to={`/venues/${venue.id}`} className="text-sm underline">
-                            View venue
-                          </Link>
-                        )}
+                    <li key={b.id} className="rounded-md border feature-card p-4 space-y-3">
+                      {/* Title */}
+                      <div className="min-w-0">
+                        <p className="font-medium justify-self-start truncate">
+                          {venue?.name ?? "Venue"}
+                        </p>
                       </div>
 
-                      {venue?.media?.[0]?.url && (
-                        <img
-                          src={venue.media[0].url}
-                          alt={venue.media[0].alt ?? `${venue.name} image`}
-                          className="h-40 w-full rounded-md border object-cover"
-                          loading="lazy"
-                        />
+                      {/* Image (clickable) */}
+                      {venue?.id ? (
+                        <Link
+                          to={`/venues/${venue.id}`}
+                          className="block h-48 w-full overflow-hidden rounded-md border bg-slate-100"
+                        >
+                          {cover?.url ? (
+                            <img
+                              src={cover.url}
+                              alt={cover.alt ?? `${venue?.name ?? "Venue"} image`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center">
+                              <span className="text-sm opacity-60">No image</span>
+                            </div>
+                          )}
+                        </Link>
+                      ) : (
+                        <div className="h-48 w-full overflow-hidden rounded-md border bg-slate-100 flex items-center justify-center">
+                          <span className="text-sm opacity-60">No image</span>
+                        </div>
                       )}
 
-                      <div className="flex items-center justify-end gap-2 pt-2">
+                      {/* Details */}
+                      <div className="text-sm space-y-2 text-left">
+                        <div>
+                          <p className="text-xs opacity-60">Check-in</p>
+                          <p className="font-medium">{formatDDMMYYYYFromKey(fromKey)}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs opacity-60">Check-out</p>
+                          <p className="font-medium">{formatDDMMYYYYFromKey(toKey)}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs opacity-60">Guests</p>
+                          <p className="font-medium">{b.guests}</p>
+                        </div>
+                      </div>
+
+                      {/* Cancel button */}
+                      <div className="flex items-center justify-end pt-1">
                         <button
                           type="button"
-                          className="btn-secondary"
+                          className="btn-secondary px-2 py-1 btn-secondary rounded shadow-md "
                           disabled={cancelMutation.isPending}
                           onClick={() => {
                             const ok = window.confirm("Cancel this booking?");
@@ -133,34 +161,69 @@ export default function MyBookingsPage() {
             )}
           </section>
 
+          {/* PAST */}
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">Past</h2>
 
             {past.length === 0 ? (
               <p className="text-sm opacity-80">No past bookings.</p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="grid gap-6 sm:grid-cols-2">
                 {past.map((b) => {
                   const fromKey = isoToDayKey(b.dateFrom);
                   const toKey = isoToDayKey(b.dateTo);
                   const venue = b.venue;
+                  const cover = venue?.media?.[0];
 
                   return (
-                    <li key={b.id} className="rounded-md border p-4">
-                      <p className="font-medium">{venue?.name ?? "Venue"}</p>
-                      <p className="text-sm opacity-80">
-                        {formatDDMMYYYYFromKey(fromKey)} → {formatDDMMYYYYFromKey(toKey)} •{" "}
-                        {b.guests} guest{b.guests === 1 ? "" : "s"}
-                      </p>
+                    <li key={b.id} className="rounded-md border feature-card p-4 space-y-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{venue?.name ?? "Venue"}</p>
+                      </div>
 
-                      {venue?.id && (
+                      {venue?.id ? (
                         <Link
                           to={`/venues/${venue.id}`}
-                          className="mt-2 inline-block text-sm underline"
+                          className="block h-48 w-full overflow-hidden rounded-md border bg-slate-100"
                         >
-                          View venue
+                          {cover?.url ? (
+                            <img
+                              src={cover.url}
+                              alt={cover.alt ?? `${venue?.name ?? "Venue"} image`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center">
+                              <span className="text-sm opacity-60">No image</span>
+                            </div>
+                          )}
                         </Link>
+                      ) : (
+                        <div className="h-48 w-full overflow-hidden rounded-md border bg-slate-100 flex items-center justify-center">
+                          <span className="text-sm opacity-60">No image</span>
+                        </div>
                       )}
+
+                      <div className="text-sm opacity-80 space-y-1">
+                        <div>
+                          <span className="opacity-70">Check-in:</span>{" "}
+                          <span className="font-medium">{formatDDMMYYYYFromKey(fromKey)}</span>
+                        </div>
+                        <div>
+                          <span className="opacity-70">Check-out:</span>{" "}
+                          <span className="font-medium">{formatDDMMYYYYFromKey(toKey)}</span>
+                        </div>
+                        <div>
+                          <span className="opacity-70">Guests:</span>{" "}
+                          <span className="font-medium">
+                            {b.guests} guest
+                            {b.guests === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs opacity-60 pt-1">This booking has ended.</p>
                     </li>
                   );
                 })}

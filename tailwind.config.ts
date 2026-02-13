@@ -1,13 +1,10 @@
 import type { Config } from "tailwindcss";
 
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
-    extend: {
-      fontFamily: {
-        sans: ["Nunito", "ui-sans-serif", "system-ui"],
-      },
-    },
+    extend: {},
   },
   plugins: [],
 } satisfies Config;

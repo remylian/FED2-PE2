@@ -8,6 +8,10 @@ main {
   @apply mx-auto max-w-7xl px-6 py-10;
 }
 
+:root {
+  color-scheme: light;
+}
+
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center

@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import { useAuthStore } from "../auth/authStore";
 import { updateProfileAvatar } from "../api/profiles";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 function isValidUrl(value: string) {
   try {
@@ -16,6 +17,11 @@ function isValidUrl(value: string) {
 }
 
 export default function ProfilePage() {
+  usePageMeta({
+    title: "My Profile | Holidaze",
+    description: "Manage your Holidaze account details, avatar, and booking preferences.",
+  });
+
   const { user, accessToken, updateUser, activeRole, setActiveRole } = useAuthStore();
 
   const isManagerAccount = Boolean(user?.venueManager);

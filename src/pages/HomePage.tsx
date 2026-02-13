@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../auth/authStore";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 export default function HomePage() {
+  usePageMeta({
+    title: "Holidaze | Discover Unique Vacation Rentals",
+    description:
+      "Discover curated vacation rentals on Holidaze. Browse cozy cabins, beachfront villas, and stylish city apartments for your perfect getaway.",
+  });
+
   const { isAuthenticated } = useAuthStore();
 
   return (

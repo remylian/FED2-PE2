@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 import { registerAndLogin } from "../api/auth";
 import { useAuthStore } from "../auth/authStore";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 const RegisterFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -37,6 +38,11 @@ function fieldClass(hasError: boolean) {
 }
 
 export default function RegisterPage() {
+  usePageMeta({
+    title: "Create Account | Holidaze",
+    description: "Create your Holidaze account to book venues and manage your vacation stays.",
+  });
+
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
 

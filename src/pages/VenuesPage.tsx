@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 import { listVenues, searchVenues, type PagedResult, type Venue } from "../api/venues";
 import VenueCard from "../components/venues/VenueCard";
@@ -10,6 +11,12 @@ import VenueCardSkeleton from "../components/venues/VenueCardSkeleton";
 const DEFAULT_LIMIT = 12;
 
 export default function VenuesPage() {
+  usePageMeta({
+    title: "Browse Venues | Holidaze",
+    description:
+      "Explore available vacation rentals on Holidaze. Filter, search, and sort venues to find the perfect place to stay.",
+  });
+
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(DEFAULT_LIMIT);

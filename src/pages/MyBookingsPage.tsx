@@ -6,12 +6,18 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "../auth/authStore";
 import { cancelBooking, getMyBookings, type BookingWithVenue } from "../api/bookings";
 import { formatDDMMYYYYFromKey } from "../utils/bookingDates";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 function isoToDayKey(iso: string) {
   return iso.slice(0, 10); // yyyy-mm-dd
 }
 
 export default function MyBookingsPage() {
+  usePageMeta({
+    title: "My Bookings | Holidaze",
+    description: "View and manage your upcoming and past bookings on Holidaze.",
+  });
+
   const { accessToken, user } = useAuthStore();
   const profileName = user?.name ?? null;
 

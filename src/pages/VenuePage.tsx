@@ -8,11 +8,17 @@ import { createBooking } from "../api/bookings";
 import { useAuthStore } from "../auth/authStore";
 import VenueAvailabilityCalendar from "../components/venues/VenueAvailabilityCalendar";
 import BookingPanel from "../components/bookings/BookingPanel";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useBookingSelection } from "../hooks/useBookingSelection";
 import { dayKeyToIsoUtc } from "../utils/bookingDates";
 import Skeleton from "../components/ui/Skeleton";
 
 export default function VenuePage() {
+  usePageMeta({
+    title: "Venue | Holidaze",
+    description: "View venue details, availability, pricing, and amenities on Holidaze.",
+  });
+
   const { id } = useParams();
   const location = useLocation();
   const qc = useQueryClient();

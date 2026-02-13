@@ -5,8 +5,14 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "../auth/authStore";
 import { createVenue, type CreateVenueInput } from "../api/venues";
 import VenueForm from "../components/venues/VenueForm";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 export default function CreateVenuePage() {
+  usePageMeta({
+    title: "Create Venue | Holidaze",
+    description: "Add a new vacation rental listing to Holidaze and start accepting bookings.",
+  });
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { accessToken, user } = useAuthStore();

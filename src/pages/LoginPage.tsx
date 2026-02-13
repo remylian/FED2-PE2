@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 import { loginUser } from "../api/auth";
 import { useAuthStore } from "../auth/authStore";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 const LoginFormSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -31,6 +32,11 @@ function fieldClass(hasError: boolean) {
 }
 
 export default function LoginPage() {
+  usePageMeta({
+    title: "Login | Holidaze",
+    description: "Log in to your Holidaze account to manage bookings and explore vacation rentals.",
+  });
+
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
 

@@ -5,8 +5,14 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "../auth/authStore";
 import { deleteVenue, listVenuesByProfile, type Venue } from "../api/venues";
 import Skeleton from "../components/ui/Skeleton";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 export default function ManagerDashboardPage() {
+  usePageMeta({
+    title: "Manager Dashboard | Holidaze",
+    description: "Manage your venues, bookings, and listings on Holidaze.",
+  });
+
   const queryClient = useQueryClient();
   const { user, accessToken } = useAuthStore();
 

@@ -5,8 +5,14 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "../auth/authStore";
 import { getVenueById, updateVenue, type Venue, type UpdateVenueInput } from "../api/venues";
 import VenueForm from "../components/venues/VenueForm";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 export default function EditVenuePage() {
+  usePageMeta({
+    title: "Edit Venue | Holidaze",
+    description: "Update details, pricing, and availability for your venue on Holidaze.",
+  });
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

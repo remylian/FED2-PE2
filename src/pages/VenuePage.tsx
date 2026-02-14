@@ -13,6 +13,21 @@ import { useBookingSelection } from "../hooks/useBookingSelection";
 import { dayKeyToIsoUtc } from "../utils/bookingDates";
 import Skeleton from "../components/ui/Skeleton";
 
+/* ---------- Amenities Helper ---------- */
+
+function getAmenities(meta?: Venue["meta"]) {
+  if (!meta) return [];
+
+  const items = [
+    { key: "wifi" as const, label: "WiFi" },
+    { key: "parking" as const, label: "Parking" },
+    { key: "breakfast" as const, label: "Breakfast" },
+    { key: "pets" as const, label: "Pets allowed" },
+  ];
+
+  return items.filter((i) => Boolean(meta[i.key]));
+}
+
 export default function VenuePage() {
   usePageMeta({
     title: "Venue | Holidaze",
@@ -41,6 +56,7 @@ export default function VenuePage() {
   });
 
   const venue = venueQuery.data;
+  console.log("VENUE META:", venue?.meta);
 
   const selection = useBookingSelection({
     bookings: venue?.bookings ?? [],
@@ -52,14 +68,11 @@ export default function VenuePage() {
       if (!id) throw new Error("Missing venue id");
       if (!venue) throw new Error("Venue not loaded");
       if (!accessToken) throw new Error("You must be logged in to book.");
-      if (!selection.startKey || !selection.endKey) {
+      if (!selection.startKey || !selection.endKey)
         throw new Error("Select check-in and check-out dates first.");
-      }
 
       const todayKey = new Date().toISOString().slice(0, 10);
-      if (selection.startKey < todayKey) {
-        throw new Error("Check-in cannot be in the past.");
-      }
+      if (selection.startKey < todayKey) throw new Error("Check-in cannot be in the past.");
 
       if (guests < 1) throw new Error("Guests must be at least 1.");
       if (guests > venue.maxGuests) throw new Error(`Max guests is ${venue.maxGuests}.`);
@@ -75,7 +88,9 @@ export default function VenuePage() {
       );
     },
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["venue", id, { bookings: true, owner: true }] });
+      await qc.invalidateQueries({
+        queryKey: ["venue", id, { bookings: true, owner: true }],
+      });
       selection.clearDates();
       setGuests(1);
       toast.success("Booking confirmed");
@@ -90,27 +105,10 @@ export default function VenuePage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 space-y-6">
       {venueQuery.isLoading && (
-        <div className="space-y-4" aria-busy="true" aria-live="polite">
-          <header className="space-y-2">
-            <Skeleton className="h-8 w-2/3" />
-            <Skeleton className="h-4 w-1/2" />
-          </header>
-
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-2/3" />
           <Skeleton className="h-64 w-full" />
           <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-
-          <div className="rounded-md border p-4 space-y-3">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-
-          <div className="rounded-md border p-4 space-y-3">
-            <Skeleton className="h-6 w-56" />
-            <Skeleton className="h-64 w-full" />
-          </div>
         </div>
       )}
 
@@ -123,7 +121,6 @@ export default function VenuePage() {
 
       {!venueQuery.isLoading && !venueQuery.isError && venue && (
         <>
-          {/* Title + owner stays above to the left */}
           <header className="space-y-1">
             <h1 className="text-2xl font-bold">{venue.name}</h1>
 
@@ -138,30 +135,48 @@ export default function VenuePage() {
             <img
               src={venue.media[0].url}
               alt={venue.media[0].alt ?? `${venue.name} image`}
-              className="h-160 w-full rounded-md border object-cover"
+              className="h-96 w-full rounded-md border object-cover"
               loading="lazy"
             />
           )}
 
-          {/* Stats moved BELOW the image */}
           <p className="text-sm opacity-80">
             Price: {venue.price} • Guests: {venue.maxGuests} • Rating: {venue.rating}
           </p>
 
+          {/* ---------- Amenities Section ---------- */}
+          {(() => {
+            const amenities = getAmenities(venue.meta);
+            if (amenities.length === 0) return null;
+
+            return (
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold opacity-80">Amenities</h2>
+                <div className="flex flex-wrap gap-2">
+                  {amenities.map((a) => (
+                    <span
+                      key={a.key}
+                      className="rounded-full border bg-white/70 px-3 py-1 text-xs font-medium"
+                    >
+                      {a.label}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
+
           {venue.description && <p className="opacity-90">{venue.description}</p>}
 
-          {/* Collapsible booking + availability */}
-          <details className="group rounded-md  py-2">
-            <summary className="list-none cursor-pointer select-none">
-              <div className="flex items-center justify-start gap-3 ">
-                <span className="inline-flex h-9 items-center justify-center rounded-md border bg-white/70 px-3 text-sm font-medium">
-                  <span className="mr-2">Check Availability</span>
-                </span>
-              </div>
+          {/* Booking + Availability */}
+          <details className="group rounded-md py-2 ">
+            <summary className="cursor-pointer list-none select-none">
+              <span className="inline-flex h-9 items-center justify-center rounded-md border bg-white/70 px-3 text-sm font-medium">
+                Check Availability
+              </span>
             </summary>
 
             <div className="mt-4 grid gap-6 lg:grid-cols-2">
-              {/* Left: booking (or manager message) */}
               <div>
                 {canBookAsCustomer ? (
                   <BookingPanel
@@ -199,16 +214,13 @@ export default function VenuePage() {
                 )}
               </div>
 
-              {/* Right: calendar */}
-              <div>
-                <VenueAvailabilityCalendar
-                  bookings={venue.bookings ?? []}
-                  startKey={selection.startKey}
-                  endKey={selection.endKey}
-                  activeField={selection.activeField}
-                  onSelectDay={selection.handleSelectDay}
-                />
-              </div>
+              <VenueAvailabilityCalendar
+                bookings={venue.bookings ?? []}
+                startKey={selection.startKey}
+                endKey={selection.endKey}
+                activeField={selection.activeField}
+                onSelectDay={selection.handleSelectDay}
+              />
             </div>
           </details>
         </>

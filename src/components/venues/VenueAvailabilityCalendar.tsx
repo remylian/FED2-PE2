@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Booking } from "../../api/venues";
-
-export type ActiveField = "start" | "end";
+import type { ActiveField } from "../../hooks/useBookingSelection";
 
 type Props = {
   bookings: Booking[];

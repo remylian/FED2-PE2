@@ -6,27 +6,14 @@ import toast from "react-hot-toast";
 import { getVenueById, type Venue } from "../api/venues";
 import { createBooking } from "../api/bookings";
 import { useAuthStore } from "../auth/authStore";
-import VenueAvailabilityCalendar from "../components/venues/VenueAvailabilityCalendar";
-import BookingPanel from "../components/bookings/BookingPanel";
 import { usePageMeta } from "../hooks/usePageMeta";
 import { useBookingSelection } from "../hooks/useBookingSelection";
 import { dayKeyToIsoUtc } from "../utils/bookingDates";
 import Skeleton from "../components/ui/Skeleton";
 
-/* ---------- Amenities Helper ---------- */
-
-function getAmenities(meta?: Venue["meta"]) {
-  if (!meta) return [];
-
-  const items = [
-    { key: "wifi" as const, label: "WiFi" },
-    { key: "parking" as const, label: "Parking" },
-    { key: "breakfast" as const, label: "Breakfast" },
-    { key: "pets" as const, label: "Pets allowed" },
-  ];
-
-  return items.filter((i) => Boolean(meta[i.key]));
-}
+import VenueHero from "../components/venues/VenueHero";
+import AmenitiesChips from "../components/venues/AmenitiesChips";
+import VenueBookingSection from "../components/venues/VenueBookingSection";
 
 export default function VenuePage() {
   usePageMeta({
@@ -39,7 +26,6 @@ export default function VenuePage() {
   const qc = useQueryClient();
 
   const { isAuthenticated, accessToken, user, activeRole } = useAuthStore();
-
   const isManagerAccount = Boolean(user?.venueManager);
   const canBookAsCustomer = !isManagerAccount || activeRole === "customer";
 
@@ -56,7 +42,6 @@ export default function VenuePage() {
   });
 
   const venue = venueQuery.data;
-  console.log("VENUE META:", venue?.meta);
 
   const selection = useBookingSelection({
     bookings: venue?.bookings ?? [],
@@ -68,8 +53,9 @@ export default function VenuePage() {
       if (!id) throw new Error("Missing venue id");
       if (!venue) throw new Error("Venue not loaded");
       if (!accessToken) throw new Error("You must be logged in to book.");
-      if (!selection.startKey || !selection.endKey)
+      if (!selection.startKey || !selection.endKey) {
         throw new Error("Select check-in and check-out dates first.");
+      }
 
       const todayKey = new Date().toISOString().slice(0, 10);
       if (selection.startKey < todayKey) throw new Error("Check-in cannot be in the past.");
@@ -88,9 +74,7 @@ export default function VenuePage() {
       );
     },
     onSuccess: async () => {
-      await qc.invalidateQueries({
-        queryKey: ["venue", id, { bookings: true, owner: true }],
-      });
+      await qc.invalidateQueries({ queryKey: ["venue", id, { bookings: true, owner: true }] });
       selection.clearDates();
       setGuests(1);
       toast.success("Booking confirmed");
@@ -102,10 +86,17 @@ export default function VenuePage() {
 
   const loginHref = `/login?redirect=${encodeURIComponent(location.pathname)}`;
 
+  const bookingError =
+    bookingMutation.isError && bookingMutation.error
+      ? bookingMutation.error instanceof Error
+        ? bookingMutation.error.message
+        : "Something went wrong"
+      : null;
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 space-y-6">
       {venueQuery.isLoading && (
-        <div className="space-y-4">
+        <div className="space-y-4" aria-busy="true" aria-live="polite">
           <Skeleton className="h-8 w-2/3" />
           <Skeleton className="h-64 w-full" />
           <Skeleton className="h-4 w-full" />
@@ -121,108 +112,31 @@ export default function VenuePage() {
 
       {!venueQuery.isLoading && !venueQuery.isError && venue && (
         <>
-          <header className="space-y-1">
-            <h1 className="text-2xl font-bold">{venue.name}</h1>
+          <VenueHero venue={venue} />
 
-            {venue.owner?.name && (
-              <p className="text-sm opacity-70">
-                Hosted by <span className="font-medium">{venue.owner.name}</span>
-              </p>
-            )}
-          </header>
+          {/* Amenities */}
+          <AmenitiesChips meta={venue.meta} />
 
-          {venue.media?.[0]?.url && (
-            <img
-              src={venue.media[0].url}
-              alt={venue.media[0].alt ?? `${venue.name} image`}
-              className="h-96 w-full rounded-md border object-cover"
-              loading="lazy"
-            />
-          )}
-
-          <p className="text-sm opacity-80">
-            Price: {venue.price} • Guests: {venue.maxGuests} • Rating: {venue.rating}
-          </p>
-
-          {/* ---------- Amenities Section ---------- */}
-          {(() => {
-            const amenities = getAmenities(venue.meta);
-            if (amenities.length === 0) return null;
-
-            return (
-              <section className="space-y-2">
-                <h2 className="text-sm font-semibold opacity-80">Amenities</h2>
-                <div className="flex flex-wrap gap-2">
-                  {amenities.map((a) => (
-                    <span
-                      key={a.key}
-                      className="rounded-full border bg-white/70 px-3 py-1 text-xs font-medium"
-                    >
-                      {a.label}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            );
-          })()}
-
-          {venue.description && <p className="opacity-90">{venue.description}</p>}
-
-          {/* Booking + Availability */}
-          <details className="group rounded-md py-2 ">
-            <summary className="cursor-pointer list-none select-none">
-              <span className="inline-flex h-9 items-center justify-center rounded-md border bg-white/70 px-3 text-sm font-medium">
-                Check Availability
-              </span>
-            </summary>
-
-            <div className="mt-4 grid gap-6 lg:grid-cols-2">
-              <div>
-                {canBookAsCustomer ? (
-                  <BookingPanel
-                    venuePrice={venue.price}
-                    maxGuests={venue.maxGuests}
-                    startKey={selection.startKey}
-                    endKey={selection.endKey}
-                    activeField={selection.activeField}
-                    onActiveFieldChange={selection.setActiveField}
-                    guests={guests}
-                    onGuestsChange={setGuests}
-                    hint={selection.hint}
-                    onClear={selection.clearDates}
-                    isAuthenticated={isAuthenticated}
-                    loginHref={loginHref}
-                    isSubmitting={bookingMutation.isPending}
-                    onConfirm={() => bookingMutation.mutate()}
-                    errorMessage={
-                      bookingMutation.isError
-                        ? bookingMutation.error instanceof Error
-                          ? bookingMutation.error.message
-                          : "Something went wrong"
-                        : null
-                    }
-                    success={bookingMutation.isSuccess}
-                  />
-                ) : (
-                  <div className="rounded-md border p-4 text-sm">
-                    <p className="font-medium">Booking disabled</p>
-                    <p className="mt-1 opacity-80">
-                      You’re in manager mode. Switch to customer mode from your profile to book
-                      venues.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <VenueAvailabilityCalendar
-                bookings={venue.bookings ?? []}
-                startKey={selection.startKey}
-                endKey={selection.endKey}
-                activeField={selection.activeField}
-                onSelectDay={selection.handleSelectDay}
-              />
-            </div>
-          </details>
+          {/* Booking */}
+          <VenueBookingSection
+            venue={venue}
+            canBookAsCustomer={canBookAsCustomer}
+            isAuthenticated={isAuthenticated}
+            loginHref={loginHref}
+            guests={guests}
+            onGuestsChange={setGuests}
+            startKey={selection.startKey}
+            endKey={selection.endKey}
+            activeField={selection.activeField}
+            onActiveFieldChange={selection.setActiveField}
+            onSelectDay={selection.handleSelectDay}
+            hint={selection.hint}
+            onClear={selection.clearDates}
+            isSubmitting={bookingMutation.isPending}
+            onConfirm={() => bookingMutation.mutate()}
+            errorMessage={bookingError}
+            success={bookingMutation.isSuccess}
+          />
         </>
       )}
     </main>

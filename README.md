@@ -1,6 +1,6 @@
 # Holidaze
 
-![Holidaze Logo](./assets/logo.png)
+![Holidaze Logo](.public/assets/logo.png)
 
 Holidaze is a modern venue booking platform built as part of the FED2 Project Exam 2 at Noroff.
 The application allows customers to browse and book venues, and venue managers to create and manage their listings.

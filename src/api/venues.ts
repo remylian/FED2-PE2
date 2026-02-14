@@ -183,10 +183,16 @@ export async function getVenueById(
 export async function listVenuesByProfile(
   profileName: string,
   accessToken: string,
+  opts?: { bookings?: boolean; owner?: boolean },
 ): Promise<Venue[]> {
   const safeName = encodeURIComponent(profileName);
 
-  const raw = await apiRequest<unknown>(`/holidaze/profiles/${safeName}/venues`, {
+  const query = toQuery({
+    _bookings: opts?.bookings ?? false,
+    _owner: opts?.owner ?? false,
+  });
+
+  const raw = await apiRequest<unknown>(`/holidaze/profiles/${safeName}/venues${query}`, {
     method: "GET",
     accessToken,
   });

@@ -202,7 +202,7 @@ export default function ProfilePage() {
                   <h2 className="text-lg mb-4 font-semibold">Edit avatar</h2>
                 </div>
 
-                <span className="rounded-md border btn-secondary px-3 py-2 text-sm opacity-80 group-open:hidden">
+                <span className="rounded-md border btn-primary px-3 py-2 text-sm opacity-80 group-open:hidden">
                   Click to Edit Avatar
                 </span>
                 <span className="rounded-md border btn-secondary px-3 py-2 text-sm opacity-80 hidden group-open:inline">

@@ -186,7 +186,7 @@ See `AI_LOG.md` for detailed documentation of AI assistance.
 Add your deployed link here:
 
 ```
-https://your-live-site-url.com
+https://fed-2-pe-2.vercel.app/
 ```
 
 ---
@@ -196,13 +196,13 @@ https://your-live-site-url.com
 Add your GitHub repository link here:
 
 ```
-https://github.com/your-username/fed2-pe2
+https://github.com/remylian/FED2-PE2
 ```
 
 ---
 
 ## Author
 
-Your Name
+Remy Lian
 Frontend Web Development – Noroff
 2026

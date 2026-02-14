@@ -79,12 +79,21 @@ export default function ManagerDashboardPage() {
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">My venues</h2>
 
-          <Link
-            to="/manager/venues/new"
-            className="rounded-md border btn-primary px-3 py-2 text-sm"
-          >
-            Create venue
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/manager/bookings"
+              className="rounded-md border btn-secondary px-3 py-2 text-sm"
+            >
+              Upcoming bookings
+            </Link>
+
+            <Link
+              to="/manager/venues/new"
+              className="rounded-md border btn-primary px-3 py-2 text-sm"
+            >
+              Create venue
+            </Link>
+          </div>
         </div>
 
         {venuesQuery.isLoading && (

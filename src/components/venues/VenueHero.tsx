@@ -2,6 +2,8 @@ import type { Venue } from "../../api/venues";
 
 export default function VenueHero({ venue }: { venue: Venue }) {
   const cover = venue.media?.[0];
+  const coverUrl = cover?.url?.trim() || "";
+  const fallbackAlt = `${venue.name} – venue image`;
 
   return (
     <>
@@ -15,18 +17,24 @@ export default function VenueHero({ venue }: { venue: Venue }) {
         )}
       </header>
 
-      {cover?.url && (
+      {coverUrl ? (
         <img
-          src={cover.url}
-          alt={cover.alt ?? `${venue.name} image`}
+          src={coverUrl}
+          alt={cover?.alt?.trim() || fallbackAlt}
           className="h-96 w-full rounded-md border object-cover"
           loading="lazy"
         />
+      ) : (
+        <div className="h-96 w-full rounded-md border flex items-center justify-center bg-gray-100 text-sm opacity-60">
+          No image available
+        </div>
       )}
 
-      <p className="text-sm opacity-80">
-        Price: {venue.price} • Guests: {venue.maxGuests} • Rating: {venue.rating}
-      </p>
+      <div className="text-sm opacity-80">
+        <p>Price: ${venue.price}/Night</p>
+        <p>Max guests: {venue.maxGuests}</p>
+        <p>Rating: {venue.rating}</p>
+      </div>
 
       {venue.description && <p className="opacity-90">{venue.description}</p>}
     </>

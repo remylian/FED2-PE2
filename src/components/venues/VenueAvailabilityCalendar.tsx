@@ -123,7 +123,7 @@ export default function VenueAvailabilityCalendar({
         </div>
       </div>
 
-      <p className="text-sm opacity-80">
+      <p className="text-sm text-left font-semibold ">
         Selecting:{" "}
         <span className="font-medium">{activeField === "start" ? "Check-in" : "Check-out"}</span>
       </p>

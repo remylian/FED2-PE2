@@ -71,7 +71,7 @@ export default function BookingPanel({
           ].join(" ")}
           onClick={() => onActiveFieldChange("start")}
         >
-          <p className="text-xs opacity-70">Check-in</p>
+          <p className="text-xs  opacity-70">Check-in</p>
           <p className="font-medium">{checkInText}</p>
         </button>
 
@@ -107,19 +107,59 @@ export default function BookingPanel({
 
       {hint && (
         <div className="rounded-md border p-3 text-sm">
-          <p className="font-medium">Note</p>
-          <p className="mt-1 opacity-80">{hint}</p>
+          <p className="font-medium ">Note</p>
+          <p className="mt-1 text-red-700 opacity-80">{hint}</p>
         </div>
       )}
 
       {checkInInPast && (
         <div className="rounded-md border p-3 text-sm">
-          <p className="font-medium">Invalid date</p>
-          <p className="mt-1 opacity-80">Check-in cannot be in the past.</p>
+          <p className="font-medium ">Invalid date</p>
+          <p className="mt-1 text-red-700 opacity-80">Check-in cannot be in the past.</p>
         </div>
       )}
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      {canShowSummary && (
+        <div className="rounded-md border text-left w-fit bg-gray-100 p-3 text-sm space-y-1">
+          <p>
+            <span className="opacity-70">Nights:</span>{" "}
+            <span className="font-medium">{nights}</span>
+          </p>
+          <p>
+            <span className="opacity-70">Estimated total:</span>{" "}
+            <span className="font-medium">${total}</span>
+          </p>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="rounded-md border p-3 text-sm">
+          <p className="font-medium">Booking failed</p>
+          <p className="mt-1 opacity-80">{errorMessage}</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="rounded-md border bg-emerald-100 p-3 text-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-medium">Booking created!</p>
+              <p className="mt-1 opacity-80">The calendar will update automatically.</p>
+            </div>
+
+            <button
+              type="button"
+              className="rounded-md border bg-white/60 px-3 py-1 text-xs hover:bg-white"
+              onClick={onClear}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Actions moved to bottom */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <label className="text-sm" htmlFor="guests">
             Guests (max {maxGuests})
@@ -131,7 +171,7 @@ export default function BookingPanel({
             max={maxGuests}
             value={guests}
             onChange={(e) => onGuestsChange(Number(e.target.value))}
-            className="w-32 rounded-md bg-gray-100 border px-3 py-2 text-sm"
+            className="w-16 rounded-md ml-2 bg-gray-100 border px-3 py-2 text-sm"
           />
         </div>
 
@@ -153,33 +193,6 @@ export default function BookingPanel({
           </button>
         )}
       </div>
-
-      {canShowSummary && (
-        <div className="rounded-md border p-3 text-sm space-y-1">
-          <p>
-            <span className="opacity-70">Nights:</span>{" "}
-            <span className="font-medium">{nights}</span>
-          </p>
-          <p>
-            <span className="opacity-70">Estimated total:</span>{" "}
-            <span className="font-medium">{total}</span>
-          </p>
-        </div>
-      )}
-
-      {errorMessage && (
-        <div className="rounded-md border p-3 text-sm">
-          <p className="font-medium">Booking failed</p>
-          <p className="mt-1 opacity-80">{errorMessage}</p>
-        </div>
-      )}
-
-      {success && (
-        <div className="rounded-md border bg-emerald-100 p-3 text-sm">
-          <p className="font-medium">Booking created!</p>
-          <p className="mt-1 opacity-80">The calendar will update automatically.</p>
-        </div>
-      )}
     </section>
   );
 }

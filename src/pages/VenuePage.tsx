@@ -93,6 +93,14 @@ export default function VenuePage() {
         : "Something went wrong"
       : null;
 
+  // ✅ Clear both: calendar selection + mutation success/error UI
+  const handleClearBookingPanel = () => {
+    bookingMutation.reset(); // clears isSuccess/isError (so "Dismiss" works)
+    selection.clearDates();
+    // Optional: keep or remove depending on your desired UX
+    // setGuests(1);
+  };
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 space-y-6">
       {venueQuery.isLoading && (
@@ -131,7 +139,7 @@ export default function VenuePage() {
             onActiveFieldChange={selection.setActiveField}
             onSelectDay={selection.handleSelectDay}
             hint={selection.hint}
-            onClear={selection.clearDates}
+            onClear={handleClearBookingPanel}
             isSubmitting={bookingMutation.isPending}
             onConfirm={() => bookingMutation.mutate()}
             errorMessage={bookingError}

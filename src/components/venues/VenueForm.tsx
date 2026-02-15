@@ -56,11 +56,14 @@ export default function VenueForm(props: Props) {
     e.preventDefault();
     if (!canSubmit || props.isSubmitting) return;
 
-    const mediaArray = mediaUrl.trim()
+    const url = mediaUrl.trim();
+    const alt = mediaAlt.trim();
+
+    const mediaArray = url
       ? [
           {
-            url: mediaUrl.trim(),
-            alt: mediaAlt.trim() ? mediaAlt.trim() : null,
+            url,
+            ...(alt ? { alt } : {}), // ✅ omit alt if empty
           },
         ]
       : [];
@@ -71,21 +74,25 @@ export default function VenueForm(props: Props) {
       price,
       maxGuests,
       meta: { wifi, parking, breakfast, pets },
-      media: mediaArray,
     };
 
     if (props.mode === "create") {
+      // ✅ media is optional; omit if no URL (API may add a default image)
       const payload: CreateVenueInput = {
         ...base,
-        media: base.media.length ? base.media : undefined,
+        ...(mediaArray.length ? { media: mediaArray } : {}),
       };
+
       props.onSubmit(payload);
       return;
     }
 
+    // Edit mode: allow clearing by sending empty array if URL removed
     const payload: UpdateVenueInput = {
       ...base,
+      media: mediaArray,
     };
+
     props.onSubmit(payload);
   }
 
@@ -123,7 +130,7 @@ export default function VenueForm(props: Props) {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="text-sm font-medium" htmlFor="price">
-              Price (NOK/night)
+              Price ($/night)
             </label>
             <input
               id="price"
@@ -175,7 +182,7 @@ export default function VenueForm(props: Props) {
           <input
             id="mediaAlt"
             className="w-full rounded-md border bg-gray-100 px-3 py-2 text-sm"
-            value={mediaAlt ?? ""}
+            value={mediaAlt}
             onChange={(e) => setMediaAlt(e.target.value)}
             placeholder="Front view of the cabin"
             autoComplete="off"
@@ -229,7 +236,7 @@ export default function VenueForm(props: Props) {
 
         <button
           type="submit"
-          className="rounded-md  btn-primary px-3  py-2 text-sm"
+          className="rounded-md btn-primary px-3 py-2 text-sm"
           disabled={!canSubmit || props.isSubmitting}
           title={!canSubmit ? "Fill required fields first" : undefined}
         >

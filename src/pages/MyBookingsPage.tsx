@@ -64,7 +64,7 @@ export default function MyBookingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 space-y-8">
-      <header className="space-y-1">
+      <header className="space-y-1 border-b">
         <h1 className="text-2xl font-semibold">My bookings</h1>
         <p className="opacity-80">Upcoming and past trips</p>
       </header>

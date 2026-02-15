@@ -72,8 +72,8 @@ export default function ManagerBookingsPage() {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 space-y-6">
       <header className="space-y-2">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
+        <div className="flex items-start justify-between border-b gap-4">
+          <div className="space-y-1 ">
             <h1 className="text-2xl font-semibold">Upcoming bookings</h1>
             <p className="opacity-80">Bookings across your venues</p>
           </div>
